@@ -38,11 +38,6 @@
 
 namespace gvr {
 
-struct ShaderUniformsPerObject;
-
-typedef std::function<void(Mesh&, GLuint)> AttributeVariableBind;
-typedef std::function<void(ShaderData&, GLuint)> UniformVariableBind;
-
 /**
  * Contains information about the vertex attributes, textures and
  * uniforms used by the shader source and the sources for the
