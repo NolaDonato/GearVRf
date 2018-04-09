@@ -25,6 +25,7 @@
 #include "vk_imagebase.h"
 #include "vk_render_target.h"
 #include "vk_render_texture_offscreen.h"
+#include "engine/renderer/render_sorter.h"
 #include "vulkanCore.h"
 #include <array>
 
@@ -1101,7 +1102,7 @@ void VulkanCore::InitPipelineForRenderData(const GVR_VK_Vertices* m_vertices, Vu
         beginCmdBuffer(cmdBuffer);
 
         if(renderTarget!= NULL)
-            renderTarget->beginRendering(Renderer::getInstance());
+            renderTarget->beginRendering();
         else {
             postEffectRenderTexture->setBackgroundColor(camera->background_color_r(), camera->background_color_g(),camera->background_color_b(), camera->background_color_a());
             postEffectRenderTexture->beginRendering(Renderer::getInstance());
@@ -1126,9 +1127,9 @@ void VulkanCore::InitPipelineForRenderData(const GVR_VK_Vertices* m_vertices, Vu
         }
 
         if(renderTarget!= NULL)
-            renderTarget->endRendering(Renderer::getInstance());
+            renderTarget->endRendering();
         else
-            postEffectRenderTexture->endRendering(Renderer::getInstance());
+            postEffectRenderTexture->endRendering(&(renderTarget->getRenderSorter()->getRenderer()));
 
         // By ending the command buffer, it is put out of record mode.
         err = vkEndCommandBuffer(cmdBuffer);

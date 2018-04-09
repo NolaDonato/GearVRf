@@ -67,7 +67,8 @@ namespace gvr {
             char const * msg = "Thread priority security exception. Make sure the APK is signed.";
             vrapi_ShowFatalError(&oculusJavaMainThread_, nullptr, msg, __FILE__, __LINE__);
         }
-
+        gRenderer = Renderer::getInstance();
+        gRenderer->setJavaVM(oculusJavaGlThread_.Vm);
         return vrapiInitResult;
     }
 
@@ -125,7 +126,6 @@ namespace gvr {
     renderTextureInfo->useMultiview = use_multiview;
     renderTextureInfo->views = use_multiview ? 2 : 1;
     renderTextureInfo->texId = fbo.getColorTexId(index);
-
     return renderTextureInfo;
 
 }
@@ -150,6 +150,7 @@ void GVRActivity::onSurfaceChanged(JNIEnv &env) {
         //@todo backend specific fix, generalize; ensures there is a renderer instance after pause/
         //resume
         gRenderer = Renderer::getInstance();
+        gRenderer->setJavaVM(oculusJavaGlThread_.Vm);
 
         oculusMobile_ = vrapi_EnterVrMode(&parms);
         if (gearController != nullptr) {

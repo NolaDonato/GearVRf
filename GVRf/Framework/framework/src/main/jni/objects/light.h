@@ -20,13 +20,9 @@
 #ifndef LIGHT_H_
 #define LIGHT_H_
 
-#include <map>
-#include <memory>
-#include <string>
-#include <glslang/Include/Common.h>
-
 #include "objects/shader_data.h"
 #include "engine/renderer/renderer.h"
+#include "components/java_component.h"
 #include "objects/scene_object.h"
 #include "objects/components/shadow_map.h"
 #include "util/gvr_jni.h"
@@ -196,38 +192,27 @@ public:
     /**
      * Internal function called at the start of each frame
      * to update the shadow map.
-     * @returns true if shadow map in use, else false
+     * @returns the shadow map if it was created, else null
      */
-    bool makeShadowMap(Scene* scene, jobject jscene, ShaderManager* shader_manager, int texIndex);
+    ShadowMap* makeShadowMap(Scene* scene, jobject jscene, ShaderManager* shader_manager, int texIndex);
 
-    const char* getLightClass() const
-    {
-        return mLightClass.c_str();
-    }
+    const char* getLightClass() const;
 
     int getLightIndex() const
     {
         return mLightIndex;
     }
 
-    const char* getLightName() const { return mLightName.c_str(); }
+    const char* getLightName() const;
 
-    void setLightIndex(int index)
-    {
-        mLightIndex = index;
-        mLightName = mLightClass + "s[" + std::to_string(mLightIndex) + "]";
-    }
+    void setLightIndex(int index);
 
    /**
     * Set the light class that determines what
     * type of light this is.
     * {@link GVRScene.addLight }
     */
-    void setLightClass(const char* lightClass)
-    {
-        mLightClass = lightClass;
-        mLightName = mLightClass + "s[" + std::to_string(mLightIndex) + "]";
-    }
+    void setLightClass(const char* lightClass);
 
     virtual void onAddedToScene(Scene* scene);
     virtual void onRemovedFromScene(Scene* scene);
@@ -239,8 +224,6 @@ private:
     Light(Light&& light) = delete;
     Light& operator=(const Light& light) = delete;
     Light& operator=(Light&& light) = delete;
-
-    void updateLayout();
 
 private:
     int mShadowMapIndex;

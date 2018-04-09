@@ -18,14 +18,13 @@ layout ( location = 0 ) out vec4 v_color;
 void main()
 {
     vec4 pos = vec4(a_position, 1);
+    mat4 mvp = u_mvp;
+
 #ifdef HAS_MULTIVIEW
     bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-    mat4 mvp = u_mvp_[gl_ViewID_OVR];
-    if(!render_mask)
+    if (!render_mask)
         mvp = mat4(0.0);  //  if render_mask is not set for particular eye, dont render that object
-    gl_Position = mvp  * pos;
-#else
-  	gl_Position = u_mvp * pos;
 #endif
+    gl_Position = mvp  * pos;
     v_color = a_color;
 }

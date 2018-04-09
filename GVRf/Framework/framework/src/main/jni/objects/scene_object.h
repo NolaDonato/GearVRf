@@ -20,11 +20,10 @@
 #ifndef SCENE_OBJECT_H_
 #define SCENE_OBJECT_H_
 
+//#define DEBUG_CULL 1
 #include <algorithm>
 #include <mutex>
 
-#include "objects/hybrid_object.h"
-#include "objects/components/component.h"
 #include "objects/components/render_data.h"
 #include "objects/components/transform.h"
 #include "objects/components/camera.h"
@@ -34,8 +33,6 @@
 #include "util/gvr_gl.h"
 
 namespace gvr {
-class Camera;
-class CameraRig;
 
 class SceneObject: public HybridObject {
 public:

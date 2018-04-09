@@ -41,11 +41,12 @@ typedef void (GL_APIENTRY *PFNGLFRAMEBUFFERTEXTUREMULTISAMPLEMULTIVIEWOVRPROC)(G
 GLRenderTexture::GLRenderTexture(int width, int height, int sample_count, int layers, GLuint fboId, GLuint texId):
         RenderTexture(sample_count),
         layer_index_(0),
+        depth_format_(GL_DEPTH24_STENCIL8_OES),
         renderTexture_gl_render_buffer_(nullptr),
         renderTexture_gl_frame_buffer_(nullptr),
         renderTexture_gl_resolve_buffer_(nullptr),
-        renderTexture_gl_color_buffer_(nullptr){
-
+        renderTexture_gl_color_buffer_(nullptr)
+{
     setImage(new GLRenderImage(width, height, layers, texId, false));
     renderTexture_gl_frame_buffer_ = new GLFrameBuffer(fboId);
 }
@@ -80,18 +81,15 @@ GLRenderTexture::GLRenderTexture(int width, int height, int sample_count, int la
 }
 
 
-GLRenderTexture::GLRenderTexture(int width, int height, int sample_count,
-        int jcolor_format, int jdepth_format, bool resolve_depth,
-        const TextureParameters* texparams)
-        : RenderTexture(sample_count),
-          depth_format_(jdepth_format),
-          layer_index_(0),
-          renderTexture_gl_render_buffer_(nullptr),
-          renderTexture_gl_frame_buffer_(new GLFrameBuffer()),
-          renderTexture_gl_resolve_buffer_(nullptr),
-          renderTexture_gl_color_buffer_(nullptr)
+GLRenderTexture::GLRenderTexture(int sample_count, int jdepth_format)
+    : RenderTexture(sample_count),
+      depth_format_(jdepth_format),
+      layer_index_(0),
+      renderTexture_gl_render_buffer_(nullptr),
+      renderTexture_gl_frame_buffer_(new GLFrameBuffer()),
+      renderTexture_gl_resolve_buffer_(nullptr),
+      renderTexture_gl_color_buffer_(nullptr)
 {
-
 }
 
 GLRenderTexture::~GLRenderTexture()
@@ -107,15 +105,6 @@ GLRenderTexture::~GLRenderTexture()
     {
         glDeleteBuffers(1, &renderTexture_gl_pbo_);
     }
-}
-
-bool GLRenderTexture::isReady()
-{
-    if (!Texture::isReady())
-    {
-        return false;
-    }
-    return true;
 }
 
 void GLRenderTexture::initialize()
@@ -150,7 +139,6 @@ void GLRenderTexture::generateRenderTextureNoMultiSampling(int jdepth_format,
     {
         renderTexture_gl_frame_buffer_ = new GLFrameBuffer();
         generateRenderTextureLayer(width(), height());
-        checkGLError("RenderTexture::isReady generateRenderTextureLayer");
     }
     return status;
 }
@@ -161,12 +149,11 @@ void GLNonMultiviewRenderTexture::beginRendering(Renderer* renderer)
     {
         return;
     }
-
     bind();
     Image* image = getImage();
     if (image->getDepth() > 1)
     {
-        LOGV("GLRenderTexture::beginRendering layer=%d", layer_index_);
+        LOGV("GLNonMultiviewRenderTexture::beginRendering layer=%d", layer_index_);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, image->getId(), 0, layer_index_);
     }
     GLRenderTexture::beginRendering(renderer);
@@ -185,7 +172,6 @@ void GLNonMultiviewRenderTexture::generateRenderTextureLayer(int width, int heig
     glBindFramebuffer(GL_FRAMEBUFFER, renderTexture_gl_frame_buffer_->id());
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, image->getId(), 0, layer_index_);
     LOGD("LIGHT: generated render texture layer = %d texid = %d", layer_index_, image->getId());
-    checkGLError("RenderTexture::generateRenderTextureLayer");
     int fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (fboStatus == GL_FRAMEBUFFER_COMPLETE)
     {
@@ -198,20 +184,8 @@ void GLNonMultiviewRenderTexture::generateRenderTextureLayer(int width, int heig
         return;
     }
     LOGE("RenderTexture::generateRenderTextureLayer Could not bind texture %d to framebuffer: %d", image->getId(), fboStatus);
-    switch (fboStatus)
-    {
-        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT :
-        LOGE("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-        break;
+    LOGE("%s", frameBufferStatusString(fboStatus));
 
-        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        LOGE("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-        break;
-
-        case GL_FRAMEBUFFER_UNSUPPORTED:
-        LOGE("GL_FRAMEBUFFER_UNSUPPORTED");
-        break;
-    }
 }
 
 void GLRenderTexture::generateRenderTextureEXT(int sample_count,
@@ -283,21 +257,19 @@ void GLRenderTexture::beginRendering(Renderer* renderer)
     GL(glDisable(GL_POLYGON_OFFSET_FILL));
     GL(glLineWidth(1.0f));
 
+    int mask = GL_DEPTH_BUFFER_BIT;
+
     if ((mBackColor[0] != -1))
     {
-        int mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
+        mask |= GL_COLOR_BUFFER_BIT;
         glClearColor(mBackColor[0], mBackColor[1], mBackColor[2], mBackColor[3]);
-        if (mUseStencil && (depth_format_ == GL_DEPTH24_STENCIL8_OES))
-        {
-            mask |= GL_STENCIL_BUFFER_BIT;
-            glStencilMask(~0);
-        }
-        glClear(mask);
     }
-    else
+    if (mUseStencil && (depth_format_ == GL_DEPTH24_STENCIL8_OES))
     {
-        glClear(GL_DEPTH_BUFFER_BIT);
+        mask |= GL_STENCIL_BUFFER_BIT;
+        glStencilMask(~0);
     }
+    glClear(mask);
 }
 
 void GLRenderTexture::endRendering(Renderer* renderer)
@@ -319,7 +291,8 @@ void GLRenderTexture::endRendering(Renderer* renderer)
     }
 }
 
-void GLRenderTexture::invalidateFrameBuffer(GLenum target, bool is_fbo, const bool color_buffer, const bool depth_buffer) {
+void GLRenderTexture::invalidateFrameBuffer(GLenum target, bool is_fbo, const bool color_buffer, const bool depth_buffer)
+{
     const int offset = (int) !color_buffer;
     const int count = (int) color_buffer + ((int) depth_buffer) * 2;
     const GLenum fboAttachments[3] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT };
@@ -327,7 +300,8 @@ void GLRenderTexture::invalidateFrameBuffer(GLenum target, bool is_fbo, const bo
     glInvalidateFramebuffer(target, count, (is_fbo ? fboAttachments : attachments) + offset);
 }
 
-void GLRenderTexture::startReadBack() {
+void GLRenderTexture::startReadBack()
+{
     GLRenderImage* image = static_cast<GLRenderImage*>(getImage());
 
     glReadPixels(0, 0, image->getWidth(), image->getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -336,7 +310,8 @@ void GLRenderTexture::startReadBack() {
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 }
 
-bool GLRenderTexture::readRenderResult(uint8_t* readback_buffer){
+bool GLRenderTexture::readRenderResult(uint8_t* readback_buffer)
+{
     Image* image = getImage();
     long neededCapacity = image->getWidth() * image->getHeight();
     if (!readback_buffer) {
@@ -347,7 +322,8 @@ bool GLRenderTexture::readRenderResult(uint8_t* readback_buffer){
     return true;
 }
 
-bool GLRenderTexture::readRenderResult(uint8_t *readback_buffer, long capacity) {
+bool GLRenderTexture::readRenderResult(uint8_t *readback_buffer, long capacity)
+{
     Image* image = getImage();
     long neededCapacity = image->getWidth() * image->getHeight();
     if (!readback_buffer) {
@@ -380,6 +356,7 @@ void GLRenderTexture::bindTexture(int gl_location, int texIndex)
         glUniform1i(gl_location, texIndex);
     }
 }
+
 /*
  * Bind the framebuffer to the specified layer of the texture array.
  * Create the framebuffer and layered texture if necessary.
@@ -389,22 +366,26 @@ void GLRenderTexture::setLayerIndex(int layerIndex)
 {
     layer_index_ = layerIndex;
 }
+
 void GLMultiviewRenderTexture::startReadBack(int layer) {
     GLRenderImage* image = static_cast<GLRenderImage*>(getImage());
     glBindFramebuffer(GL_READ_FRAMEBUFFER, getReadBufferId());
     image->setupReadback(renderTexture_gl_pbo_, layer);
     GLRenderTexture::startReadBack();
 }
+
 void GLNonMultiviewRenderTexture::startReadBack(int layer) {
     GLRenderImage* image = static_cast<GLRenderImage*>(getImage());
     glBindFramebuffer(GL_READ_FRAMEBUFFER,renderTexture_gl_frame_buffer_->id() );
     image->setupReadback(renderTexture_gl_pbo_, layer);
     GLRenderTexture::startReadBack();
 }
+
 GLNonMultiviewRenderTexture::GLNonMultiviewRenderTexture(int width, int height, int sample_count,
                                      int jcolor_format, int jdepth_format, bool resolve_depth,
-                                     const TextureParameters* texture_parameters):GLRenderTexture(width, height, sample_count, jcolor_format, jdepth_format,
-                                                                                                  resolve_depth, texture_parameters) {
+                                     const TextureParameters* texture_parameters)
+        :  GLRenderTexture(sample_count,jdepth_format)
+{
     GLRenderImage* colorbuffer = new GLRenderImage(width, height, jcolor_format, texture_parameters);
     GLenum depth_format;
 
@@ -461,13 +442,13 @@ GLNonMultiviewRenderTexture::GLNonMultiviewRenderTexture(int width, int height, 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
-            LOGE("resolve FBO %i is not complete: 0x%x",
-                 renderTexture_gl_resolve_buffer_->id(), status);
+            LOGE("resolve FBO %i is not complete: 0x%x %s",
+                 renderTexture_gl_resolve_buffer_->id(), status, frameBufferStatusString(status));
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    checkGLError(" GLNonMultiviewRenderTexture:");
 }
+
 void createArrayTexture(GLuint &texId, int width, int height, GLenum tex_format) {
     glGenTextures(1, &texId);
     glBindTexture(GL_TEXTURE_2D_ARRAY, texId);
@@ -477,8 +458,10 @@ void createArrayTexture(GLuint &texId, int width, int height, GLenum tex_format)
 
 GLMultiviewRenderTexture::GLMultiviewRenderTexture(int width, int height, int sample_count,
                                                          int jcolor_format, int jdepth_format, bool resolve_depth,
-                                                         const TextureParameters* texture_parameters, int layers):GLRenderTexture(width, height, sample_count, jcolor_format, jdepth_format,
-                                                                                                                      resolve_depth, texture_parameters), mLayers_(layers) {
+                                                         const TextureParameters* texture_parameters, int layers)
+   :  GLRenderTexture(sample_count, jdepth_format),
+      mLayers_(layers)
+{
     GLRenderImage* colorbuffer = new GLRenderImage(width, height, layers, jcolor_format, texture_parameters);
     GLenum depth_format;
 
@@ -489,16 +472,16 @@ GLMultiviewRenderTexture::GLMultiviewRenderTexture(int width, int height, int sa
     switch (jdepth_format)
     {
         case DepthFormat::DEPTH_24:
-            depth_format = GL_DEPTH_COMPONENT24_OES;
-            break;
+        depth_format = GL_DEPTH_COMPONENT24_OES;
+        break;
 
         case DepthFormat::DEPTH_24_STENCIL_8:
-            depth_format = GL_DEPTH24_STENCIL8_OES;
-            break;
+        depth_format = GL_DEPTH24_STENCIL8_OES;
+        break;
 
         default:
-            depth_format = GL_DEPTH_COMPONENT16;
-            break;
+        depth_format = GL_DEPTH_COMPONENT16;
+        break;
     }
     const GLenum depthStencilAttachment =
             GL_DEPTH24_STENCIL8_OES == depth_format ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
@@ -542,27 +525,12 @@ GLMultiviewRenderTexture::GLMultiviewRenderTexture(int width, int height, int sa
 /* Check BO is OK. */
     GLenum result = (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER));
     if (result != GL_FRAMEBUFFER_COMPLETE) {
-        LOGE("RenderTextureArray::bindFrameBuffer Could not bind framebuffer: %d", result);
-        switch (result) {
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT :
-                LOGE("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-                LOGE("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-                break;
-
-            case GL_FRAMEBUFFER_UNSUPPORTED:
-                LOGE("GL_FRAMEBUFFER_UNSUPPORTED");
-                break;
-        }
-
+        LOGE("RenderTextureArray::bindFrameBuffer Could not bind framebuffer: %d %s", result, frameBufferStatusString(result));
         LOGE("Framebuffer incomplete at %s:%i\n", __FILE__, __LINE__);
 /* Unbind framebuffer. */
         (glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
 
     }
-    checkGLError("glFramebufferTextureMultiviewOVR 2");
     glScissor(0, 0, width, height);
     glViewport(0, 0, width, height);
     glClearColor(0, 0, 0, 1);
@@ -576,9 +544,8 @@ GLMultiviewRenderTexture::GLMultiviewRenderTexture(int width, int height, int sa
                                          colorbuffer->getId(), 0, 0, 2);
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
-            LOGE(
-                    "resolve FBO %i is not complete: 0x%x", renderTexture_gl_resolve_buffer_->id(),
-                    status);
+            LOGE( "resolve FBO %i is not complete: 0x%x %s", renderTexture_gl_resolve_buffer_->id(),
+                  status, frameBufferStatusString(status));
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

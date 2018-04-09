@@ -536,15 +536,15 @@ enum AABB_STATE {
 // 1 when the HBV of the object is intersecting the frustum but the object itself is not: cull it out and continue culling test with its children
 // 2 when the HBV of the object is intersecting the frustum and the mesh BV of the object are intersecting (inside) the frustum: render itself and continue culling test with its children
 // 3 when the HBV of the object is completely inside the frustum: render itself and all its children without further culling test
-int SceneObject::frustumCull(glm::vec3 camera_position, const float frustum[6][4],
-        int& planeMask) {
+int SceneObject::frustumCull(glm::vec3 camera_position,
+                             const float frustum[6][4],
+                             int& planeMask) {
     if (!enabled_ || !visible_) {
-        if (DEBUG_RENDERER) {
-            LOGD("FRUSTUM: not visible, cull out %s and all its children\n",
+#ifdef DEBUG_CULL
+        LOGD("FRUSTUM: not visible, cull out %s and all its children\n",
                     name_.c_str());
-        }
-
-        return 0;
+#endif
+       return 0;
     }
 
     // 1. Check if the bounding volume intersects with or inside the view frustum
@@ -556,31 +556,25 @@ int SceneObject::frustumCull(glm::vec3 camera_position, const float frustum[6][4
 
     // Cull out the object and all its children if its bounding volume is completely outside the frustum
     if (checkResult == OUTSIDE) {
-        if (DEBUG_RENDERER) {
-            LOGD(
-                    "FRUSTUM: HBV completely outside frustum, cull out %s and all its children\n",
-                    name_.c_str());
-        }
-
+#ifdef DEBUG_CULL
+         LOGD("FRUSTUM: HBV completely outside frustum, cull out %s and all its children\n", name_.c_str());
+#endif
         return 0;
     }
 
     if (checkResult == INSIDE) {
-        if (DEBUG_RENDERER) {
-            LOGD(
-                    "FRUSTUM: HBV completely inside frustum, render %s and all its children\n",
-                    name_.c_str());
-        }
+#ifdef DEBUG_CULL
+        LOGD("FRUSTUM: HBV completely inside frustum, render %s and all its children\n",  name_.c_str());
+#endif
         return 3;
     }
 
     // 2. Skip the empty objects with no render data
     RenderData* rdata = render_data();
     if (rdata == NULL || rdata->pass(0)->material() == NULL) {
-        if (DEBUG_RENDERER) {
-            LOGD("FRUSTUM: no render data skip %s\n", name_.c_str());
-        }
-
+#ifdef DEBUG_CULL
+        LOGD("FRUSTUM: no render data skip %s\n", name_.c_str());
+#endif
         return 1;
     }
 
@@ -598,14 +592,13 @@ int SceneObject::frustumCull(glm::vec3 camera_position, const float frustum[6][4
     }
 
     // if the object is not in the frustum, cull out itself but continue testing its children
-    if (DEBUG_RENDERER) {
+#ifdef DEBUG_CULL
         if (checkResult == OUTSIDE) {
             LOGD("FRUSTUM: mesh not in frustum, cull out %s\n", name_.c_str());
         } else {
             LOGD("FRUSTUM: mesh in frustum, render %s\n", name_.c_str());
         }
-    }
-
+#endif
     return checkResult == 0 ? 1 : 2;
 }
 

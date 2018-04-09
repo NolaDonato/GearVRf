@@ -16,15 +16,14 @@
 #include "engine/renderer/gl_renderer.h"
 #include "gl/gl_render_data.h"
 #include "objects/scene_object.h"
+
 namespace gvr
 {
     void GLRenderData::render(Shader* shader, Renderer* renderer)
     {
-        GLShader*   glshader = static_cast<GLShader*>(shader);
-        int         programId = glshader->getProgramId();
-        int         indexCount = mesh_->getIndexCount();
-        int         vertexCount = mesh_->getVertexCount();
-        int         mode = draw_mode();
+        int    indexCount = mesh_->getIndexCount();
+        int    vertexCount = mesh_->getVertexCount();
+        int    mode = draw_mode();
 
         if (mesh_->hasBones() && bones_ubo_ && shader->hasBones())
         {
@@ -57,4 +56,19 @@ namespace gvr
         glBindVertexArray(0);
     }
 
+
+    void GLRenderData::bindToShader(Shader* shader, Renderer* renderer)
+    {
+        if (mesh_->hasBones() && bones_ubo_ && shader->hasBones())
+        {
+            GLUniformBlock* glbones = static_cast<GLUniformBlock*>(bones_ubo_);
+            glbones->bindBuffer(shader, renderer);
+        }
+#ifdef DEBUG_SHADER
+        LOGV("SHADER: RenderData::render binding vertex arrays to program %d %p %d vertices, %d indices",
+                                     programId, this, vertexCount, indexCount);
+#endif
+        mesh_->getVertexBuffer()->bindToShader(shader, mesh_->getIndexBuffer());
+        checkGLError("RenderData::bindToShader");
+    }
 }

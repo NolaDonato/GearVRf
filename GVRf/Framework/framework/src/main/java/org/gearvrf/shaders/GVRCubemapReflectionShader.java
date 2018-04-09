@@ -56,6 +56,7 @@ import org.gearvrf.GVRShaderData;
 import org.gearvrf.GVRShaderTemplate;
 import org.gearvrf.R;
 import org.gearvrf.utility.TextFile;
+import org.joml.Matrix4f;
 
 /**
  * Shader which renders a cubemap texture as a reflection map.
@@ -74,6 +75,9 @@ import org.gearvrf.utility.TextFile;
  */
 public class GVRCubemapReflectionShader extends GVRShaderTemplate
 {
+    static private Matrix4f mTempMatrix1 = new Matrix4f();
+    static private Matrix4f mTempMatrix2 = new Matrix4f();
+
     public GVRCubemapReflectionShader(GVRContext gvrContext)
     {
         super("float3 u_color float u_opacity", "samplerCube u_texture", "float3 a_position float3 a_normal", GLSLESVersion.VULKAN);
@@ -81,9 +85,54 @@ public class GVRCubemapReflectionShader extends GVRShaderTemplate
         setSegment("FragmentTemplate", TextFile.readTextFile(context, R.raw.cubemap_reflection_frag));
         setSegment("VertexTemplate", TextFile.readTextFile(context, R.raw.cubemap_reflection_vert));
     }
+
+    @Override
     protected void setMaterialDefaults(GVRShaderData material)
     {
         material.setFloat("u_opacity", 1.0f);
         material.setVec3("u_color", 1.0f, 1.0f, 1.0f);
+    }
+
+    @Override
+    public String getMatrixCalc(boolean usesLights)
+    {
+        return "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^";
+    }
+
+
+    /**
+     * Calculate the matrices required by this shader.
+     * This function is called every frame to calculate the matrices
+     * used by the shader. The cubemap reflection shader calculates
+     * the inverse of the model view matrix.
+     * @param inputMatrices input matrices - projection, left view, right view and model.
+     * @param outputMatrices left model view projection, right model view projection
+     *                       left model view inverse transpose,
+     *                       right model view inverse transpose
+     *                       left view inverse
+     *                       right view inverse
+     */
+    public static int calcMatrix(float[] inputMatrices, float[] outputMatrices, int numMatrices, boolean isStereo)
+    {
+        // Input matrices
+        int PROJECTION = 0;
+        int LEFT_VIEW = 1 * 16;
+        int RIGHT_VIEW = 2 * 16;
+        int LEFT_VIEW_INVERSE = 3 * 16;
+        int RIGHT_VIEW_INVERSE = 4 * 16;
+        int MODEL = 5 * 16;
+        int LEFT_MVP = 6 * 16;
+        int RIGHT_MVP = 7 * 16;
+
+        // Output matrices
+        int OUT_MODEL = 0;
+        int OUT_LEFT_MVP = 1 * 16;
+        int OUT_RIGHT_MVP = 2 * 16;
+        int OUT_LEFT_MODEL_VIEW_INVERSE = 3 * 16;
+        int OUT_RIGHT_MODEL_VIEW_INVERSE = 4 * 16;
+
+        // Copy model matrix, left model view projection, right model view projection
+        System.arraycopy(inputMatrices, MODEL, outputMatrices, 0, 3 * 16);
+        return 3 + calcLightMatrix(inputMatrices, outputMatrices, mTempMatrix1, mTempMatrix2, isStereo);
     }
 }

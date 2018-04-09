@@ -29,8 +29,8 @@
 #include "objects/shader_data.h"
 #include "components/camera_rig.h"
 #include "engine/renderer/renderer.h"
+#include "objects/light.h"
 #include "objects/lightlist.h"
-#include "objects/scene_object.h"
 
 
 namespace gvr {
@@ -43,7 +43,6 @@ public:
     static const int MAX_LIGHTS = 16;
     Scene();
     virtual ~Scene();
-    void set_java(JavaVM* javaVM, jobject javaScene);
     SceneObject* getRoot() { return &scene_root_; }
     void addSceneObject(SceneObject* scene_object);
     void removeSceneObject(SceneObject* scene_object);
@@ -84,7 +83,7 @@ public:
      * Executes a Java function which generates the
      * depth shaders for shadow mapping.
      */
-    void makeDepthShaders(jobject jscene);
+    bool makeDepthShaders(Renderer* renderer, jobject jscene);
 
     void resetStats() {
         gRenderer = Renderer::getInstance();
@@ -178,19 +177,12 @@ public:
         collider_mutex_.unlock();
     }
 
-    JavaVM* getJavaVM() const { return javaVM_; }
-
-    int get_java_env(JNIEnv** envptr);
-
     static Scene* main_scene() {
         return main_scene_;
     }
 
     static void set_main_scene(Scene* scene);
 
-    void detach_java_env() {
-        javaVM_->DetachCurrentThread();
-    }
 
 private:
     Scene(const Scene& scene) = delete;
@@ -202,14 +194,12 @@ private:
 
 private:
     static Scene* main_scene_;
-    JavaVM* javaVM_;
-    jmethodID makeDepthShadersMethod_;
     SceneObject scene_root_;
     CameraRig* main_camera_rig_;
-    int dirtyFlag_;
     bool frustum_flag_;
     bool occlusion_flag_;
     bool pick_visible_;
+    jmethodID makeDepthShadersMethod_;
     std::mutex collider_mutex_;
     LightList lights_;
     std::vector<Component*> allColliders;

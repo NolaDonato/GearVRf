@@ -40,6 +40,9 @@ namespace gvr
 
         /**
          * Copy the data from CPU into the OpenGL uniform buffer.
+         * @param Renderer  Renderer to use
+         * @param start     starting byte to copy to GPU
+         * @param len       number of bytes to copy to GPU
          */
         virtual bool updateGPU(Renderer *, int start = 0, int len = 0);
 

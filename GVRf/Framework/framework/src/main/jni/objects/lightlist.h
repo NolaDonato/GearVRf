@@ -23,98 +23,116 @@
 
 #include <functional>
 #include "engine/renderer/renderer.h"
+
+#include "objects/light.h"
+
 namespace gvr {
 
-class Light;
-
-class LightList
-{
-public:
-    LightList() : mDirty(0),
-                  mLightBlock(NULL),
-                  mNumShadowMaps(0),
-                  mTotalUniforms(0),
-                  mUseUniformBlock(true) { }
-
-    virtual ~LightList();
-
-    UniformBlock* getUBO(){
-        return mLightBlock;
-    }
-
-    void useUniformBlock()  { mUseUniformBlock = true; }
-
-    bool usingUniformBlock()    { return mUseUniformBlock; }
-
-    /*
-     * Adds a new light to the scene.
-     * Return true if light was added, false if already there or too many lights.
-     */
-    bool addLight(Light* light);
-
-    /*
-     * Removes an existing light from the scene.
-     * Return true if light was removed, false if light was not in the scene.
-     */
-    bool removeLight(Light* light);
-
-    /*
-     * Removes all the lights from the scene.
-     */
-    void clear();
-
-    /*
-     * Call the given function for each light in the list.
-     * @param func function to call
-     */
-    void forEachLight(std::function< void(const Light&) > func) const;
-    void forEachLight(std::function< void(Light&) > func);
-
-    int getLights(std::vector<Light*>& lights) const;
-
-    void makeShaderBlock(std::string& layout) const;
-
-    ShadowMap* updateLightBlock(Renderer* renderer);
-
-    bool createLightBlock(Renderer* renderer);
-
-    bool isDirty() const
+    class LightList
     {
-        return mDirty != 0;
-    }
+    public:
+        LightList() : mDirty(0),
+                mLightBlock(nullptr),
+                mNumShadowMaps(0),
+                mTotalUniforms(0),
+                mNumLights(0),
+                mShadowMap(nullptr),
+                mUseUniformBlock(true) { }
 
-    void clearDirty()
-    {
-        mDirty = 0;
-    }
+        virtual ~LightList();
 
-    int getNumUniforms() const
-    {
-        return mTotalUniforms;
-    }
+        void useUniformBlock()  { mUseUniformBlock = true; }
 
-    void shadersRebuilt();
-    ShadowMap* scanLights();
+        bool usingUniformBlock()    { return mUseUniformBlock; }
 
-    void makeShadowMaps(Scene* scene, jobject jscene, ShaderManager* shaderManager);
-    void useLights(Renderer* renderer, Shader* shader);
+        /*
+         * Adds a new light to the scene.
+         * Return true if light was added, false if already there or too many lights.
+         */
+        bool addLight(Light* light);
 
-private:
-    LightList(const LightList& lights) = delete;
-    LightList(LightList&& lights) = delete;
-    LightList& operator=(const LightList& lights) = delete;
-    LightList& operator=(LightList&& lights) = delete;
+        /*
+         * Removes an existing light from the scene.
+         * Return true if light was removed, false if light was not in the scene.
+         */
+        bool removeLight(Light* light);
+
+        /*
+         * Removes all the lights from the scene.
+         */
+        void clear();
+
+        /*
+         * Call the given function for each light in the list.
+         * @param func function to call
+         */
+        void forEachLight(std::function< void(const Light&) > func) const;
+        void forEachLight(std::function< void(Light&) > func);
+
+        int getLights(std::vector<Light*>& lights) const;
+
+        void makeShaderBlock(std::string& layout) const;
+
+        ShadowMap* updateLights(Renderer *renderer);
+
+        bool createLightBlock(Renderer* renderer);
+
+        bool isDirty() const
+        {
+            return mDirty != 0;
+        }
+
+        void clearDirty()
+        {
+            mDirty = 0;
+        }
+
+        int getNumUniforms() const
+        {
+            return mTotalUniforms;
+        }
+
+        int getShadowMapCount() const
+        {
+            return mNumShadowMaps;
+        }
+
+        int getLightCount() const
+        {
+            return mNumLights;
+        }
+
+        UniformBlock* getUBO()
+        {
+            return mLightBlock;
+        }
+
+        ShadowMap* getShadowMap() const { return mShadowMap; }
+        void makeShadowMaps(Scene* scene, jobject jscene, ShaderManager* shaderManager);
+        void useLights(Renderer* renderer, Shader* shader);
+
+        const char* getDescriptor() const { return mLightDesc; }
+
+    private:
+        LightList(const LightList& lights) = delete;
+        LightList(LightList&& lights) = delete;
+        LightList& operator=(const LightList& lights) = delete;
+        LightList& operator=(LightList&& lights) = delete;
 
 
-private:
-    mutable std::recursive_mutex mLock;
-    std::map<std::string, std::vector<Light*>> mClassMap;
-    UniformBlock* mLightBlock;
-    int mNumShadowMaps;
-    int mDirty;
-    bool mUseUniformBlock;
-    int mTotalUniforms;
-};
+    private:
+        static const int LIGHT_DESC_LENGTH  = 256;
+        mutable std::recursive_mutex mLock;
+        std::map<std::string, std::vector<Light*>> mClassMap;
+        UniformBlock* mLightBlock;
+        ShadowMap* mShadowMap;
+        int mNumShadowMaps;
+        int mDirty;
+        bool mUseUniformBlock;
+        int mTotalUniforms;
+        int mNumLights;
+        char mLightDesc[LIGHT_DESC_LENGTH];
+    };
 
 }
 #endif

@@ -36,9 +36,7 @@ class GLRenderTexture : public RenderTexture
 public:
     explicit GLRenderTexture(int width, int height, int sample_count, int layers, GLuint fboId, GLuint texId);
     explicit GLRenderTexture(int width, int height, int sample_count, int layers, int depth_format);
-    explicit GLRenderTexture(int width, int height, int sample_count,
-            int jcolor_format, int jdepth_format, bool resolve_depth,
-            const TextureParameters* texture_parameters);
+    explicit GLRenderTexture(int sample_count, int depth_format);
 
     virtual ~GLRenderTexture();
 
@@ -52,7 +50,6 @@ public:
 
     virtual void beginRendering(Renderer*);
     virtual void endRendering(Renderer*);
-    virtual bool isReady();
 
     // Start to read back texture in the background. It can be optionally called before
     // readRenderResult() to read pixels asynchronously. This function returns immediately.
@@ -140,8 +137,9 @@ class GLNonMultiviewRenderTexture: public GLRenderTexture
 public:
 
     explicit GLNonMultiviewRenderTexture(int width, int height, int sample_count, GLuint fboId, GLuint texId):
-            GLRenderTexture(width, height, sample_count, 1,fboId,texId){}
-    explicit GLNonMultiviewRenderTexture(int width, int height, int sample_count, int layers, int depth_format): GLRenderTexture(width, height, sample_count, layers , depth_format) {}
+            GLRenderTexture(width, height, sample_count, 1,fboId,texId) { }
+    explicit GLNonMultiviewRenderTexture(int width, int height, int sample_count, int layers, int depth_format)
+        : GLRenderTexture(width, height, sample_count, layers , depth_format) { }
     explicit GLNonMultiviewRenderTexture(int width, int height, int sample_count,
                              int jcolor_format, int jdepth_format, bool resolve_depth,
                              const TextureParameters* texture_parameters);

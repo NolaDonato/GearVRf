@@ -19,11 +19,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 import android.os.Environment;
+
+import org.joml.Matrix4f;
 
 /**
  * Generates a vertex and fragment shader from the sources provided.
@@ -55,62 +59,64 @@ public class GVRShader
     protected GLSLESVersion mGLSLVersion = GLSLESVersion.V100;
     protected boolean mHasVariants = false;
     protected boolean mUsesLights = false;
-    protected boolean mUseTransformBuffer = false;  // true to use Transform UBO in GL
     protected String mUniformDescriptor;
     protected String mVertexDescriptor;
     protected String mTextureDescriptor;
+    protected int mOutputBufferSize = 0;
     protected Map<String, String> mShaderSegments;
     protected static String sBonesDescriptor = "mat4 u_bone_matrix[" + GVRMesh.MAX_BONES + "]";
 
-    protected static String sTransformUBOCode = "layout (std140) uniform Transform_ubo\n{\n"
-            + " #ifdef HAS_MULTIVIEW\n"
-            + "     mat4 u_view_[2];\n"
-            + "     mat4 u_mvp_[2];\n"
-            + "     mat4 u_mv_[2];\n"
-            + "     mat4 u_mv_it_[2];\n"
-            + "     mat4 u_view_i_[2];\n"
-            + " #else\n"
-            + "     mat4 u_view;\n"
-            + "     mat4 u_mvp;\n"
-            + "     mat4 u_mv;\n"
-            + "     mat4 u_mv_it;\n"
-            + "     mat4 u_view_i;\n"
-            + " #endif\n"
-            + "     mat4 u_model;\n"
-            + "     float u_right;\n"
-            + "     uint u_render_mask;\n"
+    protected static String sTransformUBOCode =
+            "#ifdef HAS_MULTIVIEW\n"
+            + "   #define u_projection u_matrices[0]\n"
+            + "   #define u_view u_matrices[gl_ViewID_OVR + uint(1)]\n"
+            + "   #define u_view_i u_matrices[gl_ViewID_OVR + uint(3)]\n"
+            + "   #define u_mvp u_matrices[u_matrix_offset + gl_ViewID_OVR]\n"
+            + "#else\n"
+            + "   #define u_projection u_matrices[0]\n"
+            + "   #define u_view u_matrices[u_right + uint(1)]\n"
+            + "   #define u_view_i u_matrices[u_right + uint(3)]\n"
+            + "   #define u_mvp u_matrices[u_matrix_offset + u_right]\n"
+            + "#endif\n"
+            + "#define u_model u_matrices[u_matrix_offset + uint(2)]\n"
+            + "uniform uint u_right;\n"
+            + "uniform uint u_render_mask;\n"
+            + "uniform uint u_matrix_offset;\n"
+            + "layout (std140) uniform Transform_ubo\n{\n"
+            + "     mat4 u_matrices[45];\n"
             + "};\n";
 
+    protected static String sTransformCode =
+            "#ifdef HAS_MULTIVIEW\n"
+            + "   #define u_mvp u_matrices[gl_ViewID_OVR]\n"
+            + "#else\n"
+            + "   #define u_mvp u_matrices[0]\n"
+            + "#endif\n"
+            + "uniform uint u_right;\n"
+            + "uniform uint u_render_mask;\n"
+            + "uniform mat4 u_matrices[2];\n";
 
-    protected static String sTransformVkUBOCode = "layout (std140, set = 0, binding = 0) uniform Transform_ubo {\n "
-            + "     mat4 u_view;\n"
-            + "     mat4 u_mvp;\n"
-            + "     mat4 u_mv;\n"
-            + "     mat4 u_mv_it;\n"
-            + "     mat4 u_model;\n"
-            + "     mat4 u_view_i;\n"
-            + "     float u_right;\n"
+    protected static String sTransformVkUBOCode =
+            "#ifdef HAS_MULTIVIEW\n"
+            + "   #define u_projection u_matrices[0]\n"
+            + "   #define u_view u_matrices[gl_ViewID_OVR + uint(1)]\n"
+            + "   #define u_view_i u_matrices[gl_ViewID_OVR + uint(3)]\n"
+            + "   #define u_mvp u_matrices[u_matrix_offset + gl_ViewID_OVR + uint(1)]\n"
+            + "#else\n"
+            + "   #define u_projection u_matrices[0]\n"
+            + "   #define u_view u_matrices[u_right + uint(1)]\n"
+            + "   #define u_view_i u_matrices[u_right + uint(3)]\n"
+            + "   #define u_mvp u_matrices[u_matrix_offset + u_right]\n"
+            + "#endif\n"
+            + "#define u_model u_matrices[u_matrix_offset]\n"
+            + "layout (std140, set = 0, binding = 0) uniform MatrixUniforms {\n "
+            + "     uint u_right;\n"
             + "     uint u_render_mask;\n"
+            + "     uint u_matrix_offset;\n"
+            + "};\n"
+            + "layout (std140, set = 0, binding = 0) uniform Transform_ubo {\n "
+            + "     mat4 u_matrices[45];\n"
             + "};\n";
-
-
-    protected static String sTransformUniformCode = "// Transform_ubo implemented as uniforms\n"
-            + " #ifdef HAS_MULTIVIEW\n"
-            + "    uniform mat4 u_view_[2];\n"
-            + "    uniform mat4 u_mvp_[2];\n"
-            + "    uniform mat4 u_mv_[2];\n"
-            + "    uniform mat4 u_mv_it_[2];\n"
-            + "    uniform mat4 u_view_i_[2];\n"
-            + " #else\n"
-            + "    uniform mat4 u_view;\n"
-            + "    uniform mat4 u_mvp;\n"
-            + "    uniform mat4 u_mv;\n"
-            + "    uniform mat4 u_mv_it;\n"
-            + "    uniform mat4 u_view_i;\n"
-            + " #endif\n"
-            + "    uniform mat4 u_model;\n"
-            + "    uniform float u_right;\n"
-            + "    uniform uint u_render_mask;\n";
 
 
     /**
@@ -180,6 +186,32 @@ public class GVRShader
      * @see GVRShader#hasVariants()
      */
     public boolean usesLights() { return mUsesLights; }
+
+    /**
+     * Establish space for output matrices for this shader.
+     * By default GearVRF will provide the model, view and
+     * projection natrices as well as the concatenation of them
+     * (projection * view * model). If your shader variant
+     * needs additional matrices to be computed, this
+     * function defines the number of output matrices
+     * computed by the shader. These output matrices will
+     * be stored in the u_matrices uniform (an array of
+     * matrices). The uniform u_matrix_offset gives
+     * the offset of the model matrix. The matrices
+     * calculated by this shader will immediately follow
+     * in whatever order they are stored in the output buffer.
+     * <p>
+     * To compute the matrices, your shader must define this function:
+     * @{code public void calcMatrix(FloatBuffer inputMatrices, FloatBuffer outputMatrices); }
+     * The <i>inputMatrices</i> buffer will contain the projection, view and model matrices
+     * at the offsets GVRShader.PROJECTION , GVRShader.VIEW and GVRShader.MODEL.
+     * Your <i>calcMatrix</i> function should calculate the output matrices.
+     * @param n number of output matrices
+     */
+    public void setOutputMatrixCount(int n)
+    {
+        mOutputBufferSize = n * 16 * 4;
+    }
 
     /**
      * Get the string describing the shader uniforms.
@@ -258,15 +290,20 @@ public class GVRShader
      */
     protected void setMaterialDefaults(GVRShaderData material) { }
 
+    public String getMatrixCalc(boolean usesLights)
+    {
+        return null;
+    }
+
     private int addShader(GVRShaderManager shaderManager, String signature, GVRShaderData material)
     {
-        GVRContext ctx = shaderManager.getGVRContext();
         StringBuilder vertexShaderSource = new StringBuilder();
         StringBuilder fragmentShaderSource = new StringBuilder();
+        boolean useLights = signature.contains("$LIGHTSOURCES");
         vertexShaderSource.append("#version " + mGLSLVersion.toString() + "\n");
         fragmentShaderSource.append("#version " + mGLSLVersion.toString() + " \n");
-        String vshader = replaceTransforms(getSegment("VertexTemplate"));
-        String fshader = replaceTransforms(getSegment("FragmentTemplate"));
+        String vshader = replaceTransforms(getSegment("VertexTemplate"), useLights);
+        String fshader = replaceTransforms(getSegment("FragmentTemplate"), useLights);
         if (material != null)
         {
             String mtlLayout = material.makeShaderLayout();
@@ -276,15 +313,18 @@ public class GVRShader
         vshader = vshader.replace("@BONES_UNIFORMS", GVRShaderManager.makeLayout(sBonesDescriptor, "Bones_ubo", true));
         vertexShaderSource.append(vshader);
         fragmentShaderSource.append(fshader);
-        String frag =  fragmentShaderSource.toString();
+        String frag = fragmentShaderSource.toString();
         String vert = vertexShaderSource.toString();
-        int nativeShader = shaderManager.addShader(signature, mUniformDescriptor, mTextureDescriptor,
-                mVertexDescriptor, vert, frag);
-        bindCalcMatrixMethod(shaderManager, nativeShader);
+        int nativeShader = shaderManager.addShader(signature,
+                                                   mUniformDescriptor,
+                                                   mTextureDescriptor,
+                                                   mVertexDescriptor,
+                                                   vert, frag,
+                                                   getMatrixCalc(useLights));
         if (mWriteShadersToDisk)
         {
-            writeShader(ctx, "V-" + signature + ".glsl", vert);
-            writeShader(ctx, "F-" + signature + ".glsl", frag);
+            writeShader("V-" + signature + ".glsl", vert);
+            writeShader("F-" + signature + ".glsl", frag);
         }
         return nativeShader;
     }
@@ -357,16 +397,21 @@ public class GVRShader
     /**
      * Replaces @MATRIX_UNIFORMS in shader source with the
      * proper transform uniform declarations.
-     * @param code shader source code
+     * @param code          shader source code
+     * @param usesLights    true if shader uses light sources, else false
      * @return shader source with transform uniform declarations added
      */
-    protected String replaceTransforms(String code)
+    protected String replaceTransforms(String code, boolean usesLights)
     {
         if (isVulkanInstance())
+        {
             return code.replace("@MATRIX_UNIFORMS", sTransformVkUBOCode);
-        if (mUseTransformBuffer)
+        }
+        if (getMatrixCalc(usesLights) != null)
+        {
             return code.replace("@MATRIX_UNIFORMS", sTransformUBOCode);
-        return code.replace("@MATRIX_UNIFORMS", sTransformUniformCode);
+        }
+        return code.replace("@MATRIX_UNIFORMS", sTransformCode);
     }
 
     /**
@@ -423,16 +468,7 @@ public class GVRShader
         }
     }
 
-    protected void bindCalcMatrixMethod(GVRShaderManager shaderManager, int nativeShader)
-    {
-        if (isImplemented("calcMatrix", FloatBuffer.class, FloatBuffer.class))
-        {
-            NativeShaderManager.bindCalcMatrix(shaderManager.getNative(), nativeShader, getClass());
-        }
-    }
-
-
-    protected void writeShader(GVRContext context, String fileName, String sourceCode)
+    protected void writeShader( String fileName, String sourceCode)
     {
         try
         {
@@ -447,6 +483,39 @@ public class GVRShader
             org.gearvrf.utility.Log.e("GVRShaderTemplate", "Cannot write shader file " + fileName);
         }
 
+    }
+
+    protected static int calcLightMatrix(float[] inputMatrices, float[] outputMatrices, Matrix4f temp1, Matrix4f temp2, boolean isStereo)
+    {
+        // Input matrices
+        int PROJECTION = 0;
+        int LEFT_VIEW = 1 * 16;
+        int RIGHT_VIEW = 2 * 16;
+        int LEFT_VIEW_INVERSE = 3 * 16;
+        int RIGHT_VIEW_INVERSE = 4 * 16;
+        int MODEL = 5 * 16;
+        int LEFT_MVP = 6 * 16;
+        int RIGHT_MVP = 7 * 16;
+
+        // Output matrices
+        int LEFT_MODEL_VIEW_INVERSE = 3 * 16;
+        int RIGHT_MODEL_VIEW_INVERSE = 4 * 16;
+
+        temp1.set(inputMatrices, MODEL);               // model matrix
+        temp1.invert();                                // model inverse
+        temp2.set(inputMatrices, LEFT_VIEW_INVERSE);   // left view inverse matrix
+        temp2.mul(temp1, temp2);                       // model inverse * left view inverse
+        temp2.transpose();                             // ((left view * model) inverse) transpose
+        temp2.get(outputMatrices, LEFT_MODEL_VIEW_INVERSE);
+        if (isStereo)
+        {
+            temp2.set(inputMatrices, RIGHT_VIEW_INVERSE);  // right view inverse matrix
+            temp2.mul(temp1, temp2);                       // model inverse * right view inverse
+            temp2.transpose();                             // ((right view * model) inverse) transpose
+            temp2.get(outputMatrices, RIGHT_MODEL_VIEW_INVERSE);
+            return 2;
+        }
+        return 1;
     }
 
     public static native boolean isVulkanInstance();

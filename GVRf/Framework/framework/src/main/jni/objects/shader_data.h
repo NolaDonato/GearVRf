@@ -76,6 +76,7 @@ public:
     void    makeDirty(DIRTY_BITS bits);
     void    clearDirty();
     bool    isDirty(DIRTY_BITS bits) const;
+    bool    isTransparent() const;
     bool    hasTexture(const char* key) const;
     bool    hasUniform(const char* key) const;
     bool    copyUniforms(const ShaderData* src);
@@ -103,6 +104,7 @@ private:
     ShaderData& operator=(ShaderData&&) = delete;
 
 protected:
+    bool mIsTransparent;
     int mNativeShader;
     std::string mTextureDesc;
     std::vector<std::string> mTextureNames;

@@ -321,10 +321,10 @@ public class GVRShaderTemplate extends GVRShader
         {
             throw new IllegalArgumentException(type + "Template segment missing - cannot make shader");
         }
-        String combinedSource = replaceTransforms(template);
         boolean useLights = (scene != null) && (scene.getLightList().length > 0);
         String lightShaderSource = "";
 
+        String combinedSource = replaceTransforms(template, useLights);
         shaderSource.append("#version " + mGLSLVersion.toString() + "\n");
         if (definedNames.containsKey("LIGHTSOURCES") &&
             definedNames.get("LIGHTSOURCES") == 0)
@@ -453,12 +453,12 @@ public class GVRShaderTemplate extends GVRShader
                 nativeShader = shaderManager.addShader(signature, uniformDescriptor.toString(),
                                                        textureDescriptor.toString(),
                                                        vertexDescriptor.toString(),
-                                                       vertexShaderSource, fragmentShaderSource);
-                bindCalcMatrixMethod(shaderManager, nativeShader);
-                if (mWriteShadersToDisk)
+                                                       vertexShaderSource, fragmentShaderSource,
+                                                       getMatrixCalc(signature.contains("$LIGHTSOURCES")));
+                 if (mWriteShadersToDisk)
                 {
-                    writeShader(context, "V-" + signature + ".glsl", vertexShaderSource);
-                    writeShader(context, "F-" + signature + ".glsl", fragmentShaderSource);
+                    writeShader("V-" + signature + ".glsl", vertexShaderSource);
+                    writeShader("F-" + signature + ".glsl", fragmentShaderSource);
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
             }
@@ -503,13 +503,13 @@ public class GVRShaderTemplate extends GVRShader
 
                 updateDescriptors(material, meshDesc, uniformDescriptor, textureDescriptor, vertexDescriptor);
                 nativeShader = shaderManager.addShader(signature, uniformDescriptor.toString(),
-                                                       textureDescriptor.toString(), vertexDescriptor.toString(),
-                                                       vertexShaderSource, fragmentShaderSource);
-                bindCalcMatrixMethod(shaderManager, nativeShader);
+                                                       textureDescriptor.toString(), mVertexDescriptor,
+                                                       vertexShaderSource, fragmentShaderSource,
+                                                       getMatrixCalc(usesLights()));
                 if (mWriteShadersToDisk)
                 {
-                    writeShader(context, "V-" + signature + ".glsl", vertexShaderSource);
-                    writeShader(context, "F-" + signature + ".glsl", fragmentShaderSource);
+                    writeShader("V-" + signature + ".glsl", vertexShaderSource);
+                    writeShader("F-" + signature + ".glsl", fragmentShaderSource);
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
             }
@@ -540,9 +540,13 @@ public class GVRShaderTemplate extends GVRShader
         {
             defines.put("MULTIVIEW", 1);
         }
-        if ((lights == null) || (lights.length == 0) || !renderable.isLightEnabled())
+        if ((lights == null) ||
+            (lights.length == 0) ||
+            !renderable.getMesh().hasAttribute("a_normal") ||
+            !renderable.isLightEnabled())
         {
             defines.put("LIGHTSOURCES", 0);
+            defines.put("a_normal", 0);
             return defines;
         }
         defines.put("LIGHTSOURCES", 1);

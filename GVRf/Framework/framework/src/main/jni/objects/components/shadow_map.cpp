@@ -13,48 +13,29 @@
  * limitations under the License.
  */
 #include "shadow_map.h"
-#include "gl/gl_render_texture.h"
+#include "objects/textures/render_texture.h"
 
 namespace gvr {
 class Renderer;
-    ShadowMap::ShadowMap(ShaderData* mtl)
-            : GLRenderTarget((RenderTexture*)nullptr, false),
-              mLayerIndex(-1),
-              mShadowMaterial(mtl)
+    ShadowMap::ShadowMap()
+            : RenderTarget((RenderTexture*) nullptr, false, false),
+              mLayerIndex(-1)
     {
-
+        mRenderState.is_multiview = false;
+        mRenderState.is_shadow = true;
+        mRenderState.is_stereo = false;
+        mRenderState.shadow_map = nullptr;
+        mRenderState.u_render_mask = 1;
     }
 
     void ShadowMap::setLayerIndex(int layerIndex)
     {
         mLayerIndex = layerIndex;
-        GLRenderTexture* rtex = static_cast<GLRenderTexture*>(mRenderTexture);
-
-        if (rtex)
+        if (mRenderTexture)
         {
             LOGV("ShadowMap::setLayerIndex %d", layerIndex);
-            rtex->setLayerIndex(mLayerIndex);
+            mRenderTexture->setLayerIndex(mLayerIndex);
         }
-    }
-
-    void ShadowMap::bindTexture(int loc, int texIndex)
-    {
-        GLRenderTexture* rtex = static_cast<GLRenderTexture*>(mRenderTexture);
-
-        if (rtex)
-        {
-            rtex->bindTexture(loc, texIndex);
-        }
-    }
-
-    void  ShadowMap::beginRendering(Renderer* renderer)
-    {
-        GLRenderTarget::beginRendering(renderer);
-        mRenderState.render_mask = 1;
-        mRenderState.is_shadow = true;
-        mRenderState.shadow_map = nullptr;
-        mRenderState.material_override = mShadowMaterial;
-        LOGV("ShadowMap::beginRendering %s", mRenderState.material_override->getUniformDescriptor());
     }
 
 }
