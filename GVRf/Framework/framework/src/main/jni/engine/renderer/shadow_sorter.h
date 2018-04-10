@@ -20,6 +20,13 @@
 
 namespace gvr {
 
+/**
+ * RenderSorter variant used for shadow mapping.
+ * Renderables are sorted based on whether they are skinned or not.
+ * One of two shaders is used for creating shadow maps.
+ * The material, shader and render modes from the RenderPass
+ * objects are ignored.
+ */
 class ShadowRenderSorter : public RenderSorter
 {
 public:

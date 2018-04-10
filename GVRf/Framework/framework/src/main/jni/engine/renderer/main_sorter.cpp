@@ -98,7 +98,7 @@ bool MainSceneSorter::isValid(RenderState& rstate, Renderable& r)
         oldsig += nold - nnew;
         if ((nold > nnew) && (strcmp(oldsig, lightsig) != 0))
         {
-            r.renderPass->setDirty();
+            r.renderPass->markDirty();
         }
         if (r.material->isTransparent())
         {

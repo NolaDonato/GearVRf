@@ -226,6 +226,33 @@ namespace gvr
         return false;
     }
 
+
+    bool UniformBlock::setFloatVec(const char* name, const float *val, int n)
+    {
+        int bytesize = n * sizeof(float);
+        char *data = getData(name, bytesize);
+        if (data != NULL)
+        {
+            memcpy(data, val, bytesize);
+            markDirty();
+            return true;
+        }
+        return false;
+    }
+
+    bool UniformBlock::setIntVec(const char* name, const int *val, int n)
+    {
+        int bytesize = n * sizeof(int);
+        char *data = getData(name, bytesize);
+        if (data != NULL)
+        {
+            memcpy(data, val, bytesize);
+            markDirty();
+            return true;
+        }
+        return false;
+    }
+
     bool UniformBlock::getMat4(const char* name, glm::mat4 &val) const
     {
         int bytesize = 16 * sizeof(float);

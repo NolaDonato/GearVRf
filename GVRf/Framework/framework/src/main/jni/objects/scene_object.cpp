@@ -362,9 +362,8 @@ bool SceneObject::isColliding(SceneObject *scene_object) {
         LOGE("isColliding: no transform for this scene object");
         return false;
     }
-    glm::mat4 this_object_model_matrix = t->getModelMatrix();
     this->render_data()->mesh()->getTransformedBoundingBoxInfo(
-            &this_object_model_matrix, this_object_bounding_box);
+            t->getModelMatrix(), this_object_bounding_box);
 
     if (nullptr == scene_object->render_data()->mesh()) {
         LOGE("isColliding: no mesh for target scene object");
@@ -375,9 +374,8 @@ bool SceneObject::isColliding(SceneObject *scene_object) {
         LOGE("isColliding: no transform for target scene object");
         return false;
     }
-    glm::mat4 check_object_model_matrix = t->getModelMatrix();
     scene_object->render_data()->mesh()->getTransformedBoundingBoxInfo(
-            &check_object_model_matrix, check_object_bounding_box);
+            t->getModelMatrix(), check_object_bounding_box);
 
     bool result = (this_object_bounding_box[3] > check_object_bounding_box[0]
             && this_object_bounding_box[0] < check_object_bounding_box[3]

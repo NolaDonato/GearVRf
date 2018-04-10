@@ -19,6 +19,14 @@
 #include "render_sorter.h"
 
 namespace gvr {
+/**
+ * RenderSorter variant used to render the main scene.
+ * This sorter used the material, shader and render modes
+ * from the RenderPasses for rendering. Opaque objects are
+ * sorted based on rendering order, shader, mesh and material.
+ * Transparent objects are sorted based on rendering order,
+ * distance from the camera, shader, mesh and material.
+ */
 class MainSceneSorter : public RenderSorter
 {
 public:

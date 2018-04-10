@@ -282,16 +282,8 @@ bool ShaderData::copyUniforms(const ShaderData* src)
     return rc;
 }
 
-/**
- * Updates the values of the uniforms and textures
- * by copying the relevant data from the CPU to the GPU.
- * This function operates independently of the shader,
- * so it cannot tell if a texture the shader requires
- * is missing.
- * @param renderer
- * @return 1 = success, -1 texture not ready, 0 uniforms failed to load
- */
-int ShaderData::updateGPU(Renderer* renderer, RenderData* rdata)
+
+int ShaderData::updateGPU(Renderer* renderer)
 {
     std::lock_guard<std::mutex> lock(mLock);
     for (int texIndex = 0; texIndex < mTextures.size(); ++texIndex)

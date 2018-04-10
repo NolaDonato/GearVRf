@@ -282,30 +282,5 @@ namespace gvr {
         }
     }
 
-    bool GLUniformBlock::setFloatVec(const char* name, const float *val, int n)
-    {
-        int bytesize = n * sizeof(float);
-        char *data = getData(name, bytesize);
-        if (data != NULL)
-        {
-            memcpy(data, val, bytesize);
-            markDirty();
-            return true;
-        }
-        return false;
-    }
-
-    bool GLUniformBlock::setIntVec(const char* name, const int *val, int n)
-    {
-        int bytesize = n * sizeof(int);
-        char *data = getData(name, bytesize);
-        if (data != NULL)
-        {
-            memcpy(data, val, bytesize);
-            markDirty();
-            return true;
-        }
-        return false;
-    }
 
 }

@@ -305,7 +305,7 @@ void RenderSorter::validate(RenderState& rstate)
             }
             if (isValid(rstate, r))
             {
-                r.material->updateGPU(&mRenderer, r.renderData);
+                r.material->updateGPU(&mRenderer);
                 r.renderData->updateGPU(&mRenderer, r.shader);
                 if (r.shader->usesMatrixUniforms())
                 {
