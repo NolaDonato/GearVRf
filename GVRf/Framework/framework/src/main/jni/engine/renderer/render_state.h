@@ -312,6 +312,7 @@ namespace gvr
             offset_units = src.offset_units;
             render_order = src.render_order;
             sample_coverage = src.sample_coverage;
+            return *this;
         }
 
         bool operator==(const RenderModes& src) const
@@ -702,9 +703,9 @@ namespace gvr
             }
         }
 
-        int hash_code()
+        uint64_t hash_code()
         {
-            return *(reinterpret_cast<unsigned int*>(this));
+            return *(reinterpret_cast<uint64_t*>(this));
         }
     };
 }
