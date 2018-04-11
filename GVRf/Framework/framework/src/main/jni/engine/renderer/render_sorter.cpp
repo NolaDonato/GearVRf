@@ -177,6 +177,13 @@ void RenderSorter::add(RenderState& rstate, SceneObject* object)
         return;
     }
     RenderPass* rpass = rdata->pass(0);
+    RenderModes& modes = rpass->render_modes();
+
+    if (modes.getRenderMask() == 0)
+    {
+        return;
+    }
+
     Renderable* r = alloc();
 
     r->mesh = geometry;
@@ -186,7 +193,7 @@ void RenderSorter::add(RenderState& rstate, SceneObject* object)
     r->nextSibling = nullptr;
     r->transformBlock = nullptr;
     r->renderPass = rpass;
-    r->renderModes = rpass->render_modes();
+    r->renderModes = modes;
     r->material = rpass->material();
     r->shader = selectShader(rstate, *r);
     ++mVisibleElems;
@@ -518,9 +525,14 @@ void RenderSorter::render(RenderState& rstate, const Renderable& r)
     if (r.renderPass)
     {
         Shader* shader = r.shader;
+        const RenderModes& rmodes = r.renderModes;
+
         rstate.u_matrix_offset = r.matrixOffset;
         rstate.transform_block = r.transformBlock;
-
+        if ((rmodes.getRenderMask() & rstate.u_render_mask) == 0)
+        {
+            return;
+        }
         if (mRenderList.shader != r.shader)
         {
 #ifdef DEBUG_RENDER
@@ -563,7 +575,6 @@ void RenderSorter::render(RenderState& rstate, const Renderable& r)
             mRenderer.selectMesh(rstate, r);
             mRenderList.mesh = r.mesh;
         }
-        const RenderModes& rmodes = r.renderModes;
 
         if (rmodes != mRenderList.renderModes)
         {

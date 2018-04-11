@@ -17,7 +17,7 @@
 #define RENDER_SORTER_H_
 
 //#define DEBUG_CULL 1
-//#define DEBUG_RENDER 1
+#define DEBUG_RENDER 1
 //#define DEBUG_TRANSFORM 1
 
 #include <vector>
