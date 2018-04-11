@@ -108,47 +108,5 @@ import org.joml.Matrix4f;
         return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^": null;
     }
 
-    /**
-     * Calculate the matrices required by this shader.
-     * This function is called every frame to calculate the matrices
-     * used by the shader. The Phong shader uses the MVP matrix only
-     * if there is no lighting. If lights are enabled, it also must
-     * calculate the inverse of the model view matrix.
-     * @param inputMatrices input matrices - projection, left view, right view and model.
-     * @param outputMatrices left model view projection, right model view projection
-     *                       (for lighting) left model view inverse transpose,
-     *                       right model view inverse transpose
-     * @param numMatrices    number of output matrices expected for stereo
-     * @param isStereo       true for stereo rendering, false for mono
-     * @returns number of matrices actually calculated and stored in the output buffer
-     */
-    public static int calcMatrix(float[] inputMatrices, float[] outputMatrices, int numMatrices, boolean isStereo)
-    {
-        // Input matrices
-        int PROJECTION = 0;
-        int LEFT_VIEW = 1 * 16;
-        int RIGHT_VIEW = 2 * 16;
-        int LEFT_VIEW_INVERSE = 3 * 16;
-        int RIGHT_VIEW_INVERSE = 4 * 16;
-        int MODEL = 5 * 16;
-        int LEFT_MVP = 6 * 16;
-        int RIGHT_MVP = 7 * 16;
-
-        // Output matrices
-        int OUT_MODEL = 0;
-        int OUT_LEFT_MVP = 1 * 16;
-        int OUT_RIGHT_MVP = 2 * 16;
-        int OUT_LEFT_MODEL_VIEW_INVERSE = 3 * 16;
-        int OUT_RIGHT_MODEL_VIEW_INVERSE = 4 * 16;
-
-        // Copy model matrix, left model view projection, right model view projection
-        System.arraycopy(inputMatrices, MODEL, outputMatrices, 0, 3 * 16);
-        if (numMatrices > 3)
-        {
-            return 3 + calcLightMatrix(inputMatrices, outputMatrices,
-                                       mTempMatrix1, mTempMatrix2, isStereo);
-        }
-        return 3;
-    }
 }
 

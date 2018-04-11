@@ -169,7 +169,6 @@ protected:
     std::string mSignature;
     std::string mVertexShader;
     std::string mFragmentShader;
-    std::string mClassName;
     int mOutputBufferSize;
     int mId;
     bool mUseMatrixUniforms;
@@ -177,7 +176,6 @@ protected:
     bool mUseShadowMaps;
     bool mUseHasBones;
     bool mUseMaterialGPUBuffer;
-    jmethodID mCalcMatrixMethod;
 };
 
 }

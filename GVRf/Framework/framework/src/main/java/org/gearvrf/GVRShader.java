@@ -201,11 +201,12 @@ public class GVRShader
      * calculated by this shader will immediately follow
      * in whatever order they are stored in the output buffer.
      * <p>
-     * To compute the matrices, your shader must define this function:
-     * @{code public void calcMatrix(FloatBuffer inputMatrices, FloatBuffer outputMatrices); }
-     * The <i>inputMatrices</i> buffer will contain the projection, view and model matrices
-     * at the offsets GVRShader.PROJECTION , GVRShader.VIEW and GVRShader.MODEL.
-     * Your <i>calcMatrix</i> function should calculate the output matrices.
+     * To compute the matrices, your shader must override
+     * @{code String getMatrixCalc(boolean usesLights); }
+     * The function should return a string with a set of
+     * expressions to calculate the matrices needed by the shader.
+     * These matrix expressios will be calculated at run time
+     * for every object that uses this shader.
      * @param n number of output matrices
      */
     public void setOutputMatrixCount(int n)

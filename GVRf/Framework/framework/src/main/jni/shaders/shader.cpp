@@ -42,8 +42,7 @@ Shader::Shader(int id,
       mUseShadowMaps(false),
       mUseHasBones(false),
       mMatrixCalc(nullptr),
-      mUseMaterialGPUBuffer(false),
-      mCalcMatrixMethod(0)
+      mUseMaterialGPUBuffer(false)
 {
     if (strstr(vertex_shader, "u_matrices") ||
         strstr(fragment_shader, "u_matrices"))
