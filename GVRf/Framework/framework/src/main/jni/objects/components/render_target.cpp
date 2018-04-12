@@ -69,6 +69,7 @@ RenderTarget::RenderTarget(RenderTexture* tex, const RenderTarget* source)
     mRenderState.shadow_map = nullptr;
     mRenderState.is_stereo = source->mRenderState.is_stereo;
     mRenderState.is_multiview = source->mRenderState.is_multiview;
+    mRenderState.sampleCount = mRenderTexture->getSampleCount();
 }
 
 void RenderTarget::cullFromCamera(Scene* scene, jobject javaSceneObject, Camera* camera, ShaderManager* shader_manager)
@@ -124,6 +125,7 @@ void RenderTarget::setRenderSorter(RenderSorter* sorter)
 void RenderTarget::setTexture(RenderTexture* texture)
 {
     mRenderTexture = texture;
+    mRenderState.sampleCount = mRenderTexture->getSampleCount();
 }
 
 }
