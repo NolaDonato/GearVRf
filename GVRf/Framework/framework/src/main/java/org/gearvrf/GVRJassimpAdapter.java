@@ -736,7 +736,7 @@ class GVRJassimpAdapter {
         }
         if (texIndex > 1)
         {
-            assetRequest.onTextureError(mContext, "Layering only supported for two textures, ignoring " + mFileName, mFileName);
+            assetRequest.onTextureError(mContext, "Layering only supported for two textures, ignoring " + texFileName, texFileName);
             return;
         }
         if (texIndex > 0)

@@ -46,8 +46,6 @@ import org.joml.Matrix4f;
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
-    static private Matrix4f mTempMatrix1 = new Matrix4f();
-    static private Matrix4f mTempMatrix2 = new Matrix4f();
 
     public GVRPhongShader(GVRContext gvrcontext)
     {
@@ -105,7 +103,7 @@ import org.joml.Matrix4f;
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^": null;
+        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
 }

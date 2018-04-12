@@ -456,7 +456,6 @@ bool RenderSorter::isValid(RenderState& rstate, Renderable& r)
     {
         dirty = rdata->isDirty() |
                 rpass->isDirty() |
-                r.mesh->isDirty() |
                 r.material->isDirty(ShaderData::NEW_TEXTURE);
     }
     rpass->clearDirty();

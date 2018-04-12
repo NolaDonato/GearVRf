@@ -75,9 +75,6 @@ import org.joml.Matrix4f;
  */
 public class GVRCubemapReflectionShader extends GVRShaderTemplate
 {
-    static private Matrix4f mTempMatrix1 = new Matrix4f();
-    static private Matrix4f mTempMatrix2 = new Matrix4f();
-
     public GVRCubemapReflectionShader(GVRContext gvrContext)
     {
         super("float3 u_color float u_opacity", "samplerCube u_texture", "float3 a_position float3 a_normal", GLSLESVersion.VULKAN);

@@ -41,8 +41,6 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
-    static private Matrix4f mTempMatrix1 = new Matrix4f();
-    static private Matrix4f mTempMatrix2 = new Matrix4f();
 
     public GVRPhongLayeredShader(GVRContext gvrcontext)
     {

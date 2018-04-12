@@ -89,12 +89,13 @@ public class GVRShader
     protected static String sTransformCode =
             "#ifdef HAS_MULTIVIEW\n"
             + "   #define u_mvp u_matrices[gl_ViewID_OVR]\n"
+            + "   uniform mat4 u_matrices[2];\n"
             + "#else\n"
             + "   #define u_mvp u_matrices[0]\n"
+            + "   uniform mat4 u_matrices[1];\n"
             + "#endif\n"
             + "uniform uint u_right;\n"
-            + "uniform uint u_render_mask;\n"
-            + "uniform mat4 u_matrices[2];\n";
+            + "uniform uint u_render_mask;\n";
 
     protected static String sTransformVkUBOCode =
             "#ifdef HAS_MULTIVIEW\n"
@@ -404,6 +405,10 @@ public class GVRShader
      */
     protected String replaceTransforms(String code, boolean usesLights)
     {
+        if (!code.contains("@MATRIX_UNIFORMS"))
+        {
+            return code;
+        }
         if (isVulkanInstance())
         {
             return code.replace("@MATRIX_UNIFORMS", sTransformVkUBOCode);
@@ -448,27 +453,6 @@ public class GVRShader
             throw new java.lang.IllegalArgumentException("Shader source is null for segment " + segmentName + " of shader");
     }
 
-    private boolean isImplemented(String methodName, Class<?> ...paramTypes)
-    {
-        try
-        {
-            Class<? extends Object> clazz = getClass();
-            String name1 = clazz.getSimpleName();
-            Method method = clazz.getMethod(methodName, paramTypes);
-            Class<? extends Object> declClazz = method.getDeclaringClass();
-            String name2 = declClazz.getSimpleName();
-            return declClazz.equals(clazz);
-        }
-        catch (SecurityException e)
-        {
-            return false;
-        }
-        catch (NoSuchMethodException e)
-        {
-            return false;
-        }
-    }
-
     protected void writeShader( String fileName, String sourceCode)
     {
         try
@@ -484,39 +468,6 @@ public class GVRShader
             org.gearvrf.utility.Log.e("GVRShaderTemplate", "Cannot write shader file " + fileName);
         }
 
-    }
-
-    protected static int calcLightMatrix(float[] inputMatrices, float[] outputMatrices, Matrix4f temp1, Matrix4f temp2, boolean isStereo)
-    {
-        // Input matrices
-        int PROJECTION = 0;
-        int LEFT_VIEW = 1 * 16;
-        int RIGHT_VIEW = 2 * 16;
-        int LEFT_VIEW_INVERSE = 3 * 16;
-        int RIGHT_VIEW_INVERSE = 4 * 16;
-        int MODEL = 5 * 16;
-        int LEFT_MVP = 6 * 16;
-        int RIGHT_MVP = 7 * 16;
-
-        // Output matrices
-        int LEFT_MODEL_VIEW_INVERSE = 3 * 16;
-        int RIGHT_MODEL_VIEW_INVERSE = 4 * 16;
-
-        temp1.set(inputMatrices, MODEL);               // model matrix
-        temp1.invert();                                // model inverse
-        temp2.set(inputMatrices, LEFT_VIEW_INVERSE);   // left view inverse matrix
-        temp2.mul(temp1, temp2);                       // model inverse * left view inverse
-        temp2.transpose();                             // ((left view * model) inverse) transpose
-        temp2.get(outputMatrices, LEFT_MODEL_VIEW_INVERSE);
-        if (isStereo)
-        {
-            temp2.set(inputMatrices, RIGHT_VIEW_INVERSE);  // right view inverse matrix
-            temp2.mul(temp1, temp2);                       // model inverse * right view inverse
-            temp2.transpose();                             // ((right view * model) inverse) transpose
-            temp2.get(outputMatrices, RIGHT_MODEL_VIEW_INVERSE);
-            return 2;
-        }
-        return 1;
     }
 
     public static native boolean isVulkanInstance();

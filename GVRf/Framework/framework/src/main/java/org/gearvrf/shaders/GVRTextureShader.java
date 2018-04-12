@@ -43,9 +43,6 @@ public class GVRTextureShader extends GVRShaderTemplate
     private static String surfaceShader = null;
     private static String addLight = null;
     private static String vtxShader = null;
-    static private Matrix4f mTempMatrix1 = new Matrix4f();
-    static private Matrix4f mTempMatrix2 = new Matrix4f();
-
 
     public GVRTextureShader(GVRContext gvrcontext)
     {
