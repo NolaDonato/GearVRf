@@ -2,10 +2,10 @@ Radiance @LightType(Surface s, in U@LightType data, int index)
 {
     vec4 L = u_view * vec4(data.world_direction.xyz, 0.0);
 	float attenuation = 1.0;
-    vec4 ShadowCoord = @LightType_shadow_position[index];
     vec3 lightdir = normalize(L.xyz);
 
  #ifdef HAS_SHADOWS
+    vec4 ShadowCoord = @LightType_shadow_position[index];
     if ((data.shadow_map_index >= 0.0) && (ShadowCoord.w > 0.0))
 	{
         float nDotL = max(dot(s.viewspaceNormal, lightdir), 0.0);

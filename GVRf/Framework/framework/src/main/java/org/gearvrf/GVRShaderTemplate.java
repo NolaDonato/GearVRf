@@ -459,7 +459,7 @@ public class GVRShaderTemplate extends GVRShader
                                                        vertexDescriptor.toString(),
                                                        vertexShaderSource, fragmentShaderSource,
                                                        getMatrixCalc(useLights));
-                 if (mWriteShadersToDisk)
+                if (mWriteShadersToDisk)
                 {
                     writeShader("V-" + signature + ".glsl", vertexShaderSource);
                     writeShader("F-" + signature + ".glsl", fragmentShaderSource);
