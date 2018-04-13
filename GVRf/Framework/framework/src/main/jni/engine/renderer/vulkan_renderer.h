@@ -118,14 +118,11 @@ public:
                                     RenderTexture* post_effect_render_texture_a, RenderTexture* post_effect_render_texture_b);
     virtual Light* createLight(const char* uniformDescriptor, const char* textureDescriptor);
     virtual void updatePostEffectMesh(Mesh*);
-    virtual void setRenderStates(const RenderModes&) { }
-    virtual void restoreRenderStates(const RenderModes&) { }
-    virtual bool updateMatrix(RenderState& rstate, Shader* shader) { };
+    virtual void validate(RenderSorter::Renderable& r);
     virtual bool selectMesh(RenderState& rstate, const RenderSorter::Renderable& r) { };
     virtual bool selectMaterial(RenderState& rstate, ShaderData* material, Shader* shader) { };
     virtual bool selectShader(RenderState& rstate, Shader* shader) { };
-    virtual void render(Mesh* mesh, int drawMode) { };
-
+    virtual void render(const RenderState&, const RenderSorter::Renderable&);
     virtual UniformBlock* createTransformBlock(int numMatrices);
 
 private:

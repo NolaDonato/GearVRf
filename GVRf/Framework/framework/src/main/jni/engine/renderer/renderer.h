@@ -21,8 +21,9 @@
 #define RENDERER_H_
 
 #include <unordered_map>
-#include "engine/renderer/render_sorter.h"
+#include "render_sorter.h"
 #include "shaders/shader_manager.h"
+#include "render_state.h"
 
 namespace gvr {
 extern bool use_multiview;
@@ -157,13 +158,8 @@ public:
         }
         return nullptr;
     }
-    virtual void restoreRenderStates(const RenderModes&) = 0;
-    virtual void setRenderStates(const RenderModes&) = 0;
-    virtual bool updateMatrix(RenderState& rstate, Shader* shader) = 0;
-    virtual bool selectMesh(RenderState& rstate, const RenderSorter::Renderable& r) = 0;
-    virtual bool selectMaterial(RenderState& rstate, ShaderData* material, Shader* shader) = 0;
-    virtual bool selectShader(RenderState& rstate, Shader* shader) = 0;
-    virtual void render(Mesh* mesh, int drawMode) = 0;
+    virtual void validate(RenderSorter::Renderable& r) = 0;
+    virtual void render(const RenderState&, const RenderSorter::Renderable&) = 0;
 private:
     RenderTarget* mLeftRenderTarget[3];
     RenderTarget* mRightRenderTarget[3];

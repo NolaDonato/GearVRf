@@ -91,6 +91,7 @@ public:
         : nextLevel(nullptr),
           nextSibling(nullptr),
           renderData(nullptr),
+          renderPass(nullptr),
           shader(nullptr),
           mesh(nullptr),
           material(nullptr),
@@ -98,6 +99,19 @@ public:
           matrixOffset(-1),
           transformBlock(nullptr)
         {
+        }
+
+        void reset()
+        {
+            renderData = nullptr;
+            renderPass = nullptr;
+            shader = nullptr;
+            mesh = nullptr;
+            material = nullptr;
+            distanceFromCamera = 0;
+            matrixOffset = -1;
+            transformBlock = nullptr;
+            renderModes.init();
         }
     };
 

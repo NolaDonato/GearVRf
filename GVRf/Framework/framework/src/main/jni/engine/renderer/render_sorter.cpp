@@ -312,12 +312,11 @@ void RenderSorter::validate(RenderState& rstate)
             }
             if (isValid(rstate, r))
             {
-                r.material->updateGPU(&mRenderer);
-                r.renderData->updateGPU(&mRenderer, r.shader);
                 if (r.shader->usesMatrixUniforms())
                 {
                     updateTransform(rstate, r);
                 }
+                mRenderer.validate(r);
                 merge(cur);
             }
             ++cur;
@@ -490,17 +489,7 @@ bool RenderSorter::isValid(RenderState& rstate, Renderable& r)
  */
 void RenderSorter::render(RenderState& rstate)
 {
-    mRenderList.shader = nullptr;
-    mRenderList.material = nullptr;
-    mRenderList.transformBlock = nullptr;
-    mRenderList.mesh = nullptr;
-    mRenderList.renderData = nullptr;
-    mRenderList.renderPass = nullptr;
-    mRenderList.renderModes.init();
-
-    mRenderer.setRenderStates(mRenderList.renderModes);
     render(rstate, mRenderList);
-    mRenderer.restoreRenderStates(mRenderList.renderModes);
 }
 
 /**
@@ -523,69 +512,7 @@ void RenderSorter::render(RenderState& rstate, const Renderable& r)
 {
     if (r.renderPass)
     {
-        Shader* shader = r.shader;
-        const RenderModes& rmodes = r.renderModes;
-
-        rstate.u_matrix_offset = r.matrixOffset;
-        rstate.transform_block = r.transformBlock;
-        if ((rmodes.getRenderMask() & rstate.u_render_mask) == 0)
-        {
-            return;
-        }
-        if (mRenderList.shader != r.shader)
-        {
-#ifdef DEBUG_RENDER
-            LOGV("RENDER: selectShader %d", r.shader->getShaderID());
-#endif
-            mRenderList.material = nullptr;
-            mRenderList.mesh = nullptr;
-            mRenderList.transformBlock = nullptr;
-            mRenderList.shader = shader;
-            mRenderer.selectShader(rstate, shader);
-        }
-        if (r.shader->usesMatrixUniforms())
-        {
-            if (r.transformBlock == nullptr)
-            {
-                rstate.u_matrices[MVP] = r.matrices[0];
-                rstate.u_matrices[MVP + 1] = r.matrices[1];
-                mRenderList.transformBlock = nullptr;
-            }
-            else if (r.transformBlock != mRenderList.transformBlock)
-            {
-                r.transformBlock->bindBuffer(r.shader, &mRenderer);
-                mRenderList.transformBlock = r.transformBlock;
-            }
-            mRenderer.updateMatrix(rstate, shader);
-        }
-        if (mRenderList.material != r.material)
-        {
-#ifdef DEBUG_RENDER
-            LOGV("RENDER: selectMaterial %p", r.material);
-#endif
-            mRenderer.selectMaterial(rstate, r.material, shader);
-            mRenderList.material = r.material;
-        }
-        if (mRenderList.mesh != r.mesh)
-        {
-#ifdef DEBUG_RENDER
-            LOGV("RENDER: selectMesh %p", r.mesh);
-#endif
-            mRenderer.selectMesh(rstate, r);
-            mRenderList.mesh = r.mesh;
-        }
-
-        if (rmodes != mRenderList.renderModes)
-        {
-            mRenderer.restoreRenderStates(mRenderList.renderModes);
-            mRenderList.renderModes = rmodes;
-            mRenderer.setRenderStates(rmodes);
-            mRenderer.render(r.mesh, rmodes.getDrawMode());
-        }
-        else
-        {
-            mRenderer.render(r.mesh, rmodes.getDrawMode());
-        }
+        mRenderer.render(rstate, r);
     }
     else
     {

@@ -95,18 +95,21 @@ public:
                                  const char* fragmentShader, const char* matrixCalc);
     virtual UniformBlock* createTransformBlock(int numMatrices);
 
+    virtual void validate(RenderSorter::Renderable& r);
     virtual Light* createLight(const char* uniformDescriptor, const char* textureDescriptor);
     virtual void updatePostEffectMesh(Mesh*);
-    virtual void restoreRenderStates(const RenderModes&);
-    virtual void setRenderStates(const RenderModes&);
-    virtual bool updateMatrix(RenderState& rstate, Shader* shader);
-    virtual bool selectMesh(RenderState& rstate, const RenderSorter::Renderable& r);
-    virtual bool selectMaterial(RenderState& rstate, ShaderData* material, Shader* shader);
-    virtual bool selectShader(RenderState& rstate, Shader* shader);
-    virtual void render(Mesh* mesh, int drawMode);
+    virtual void render(const RenderState&, const RenderSorter::Renderable&);
 private:
+    bool updateMatrix(const RenderState& rstate, const RenderSorter::Renderable& r);
+    bool selectMesh(const RenderState&, const RenderSorter::Renderable&);
+    bool selectMaterial(const RenderSorter::Renderable& r);
+    bool selectShader(const RenderState& rstate, Shader* shader);
+    void restoreRenderStates(const RenderModes&);
+    void setRenderStates(const RenderModes&);
+    void updateState(const RenderState& rstate, const RenderSorter::Renderable&);
     void clearBuffers(const Camera& camera) const;
     UniformBlock* mMatrixUniforms;
+    RenderSorter::Renderable mCurrentState;
 };
 
 }

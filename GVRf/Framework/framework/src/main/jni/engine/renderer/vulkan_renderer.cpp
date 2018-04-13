@@ -184,6 +184,17 @@ void VulkanRenderer::updatePostEffectMesh(Mesh* copy_mesh)
     copy_mesh->setFloatVec("a_texcoord", uvs, uv_size);
 }
 
+void VulkanRenderer::validate(RenderSorter::Renderable& r)
+{
+    r.material->updateGPU(this);
+    r.renderData->updateGPU(this, r.shader);
+}
+
+void VulkanRenderer::render(const RenderState& rstate, const RenderSorter::Renderable& r)
+{
+
+}
+
 void VulkanRenderer::renderRenderTarget(Scene* scene, jobject javaSceneObject, RenderTarget* renderTarget, ShaderManager* shader_manager,
                                 RenderTexture* post_effect_render_texture_a, RenderTexture* post_effect_render_texture_b){
     std::vector<RenderData*> render_data_list;

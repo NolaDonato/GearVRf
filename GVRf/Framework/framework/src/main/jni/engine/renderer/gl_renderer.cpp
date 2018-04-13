@@ -256,6 +256,12 @@ namespace gvr
         return transBlock;
     }
 
+    void GLRenderer::validate(RenderSorter::Renderable& r)
+    {
+        r.material->updateGPU(this);
+        r.renderData->updateGPU(this, r.shader);
+    }
+
     void GLRenderer::renderRenderTarget(Scene* scene, jobject javaSceneObject, RenderTarget* renderTarget,
                             ShaderManager* shader_manager,
                             RenderTexture* post_effect_render_texture_a,
@@ -266,6 +272,7 @@ namespace gvr
         RenderData* post_effects = camera->post_effect_data();
 
         resetStats();
+        mCurrentState.reset();
         //@todo makes it clear this is a hack
         rstate.javaSceneObject = javaSceneObject;
         rstate.scene = scene;
@@ -469,30 +476,30 @@ namespace gvr
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFB);
     }
 
-    bool GLRenderer::updateMatrix(RenderState& rstate, Shader* shader)
+    bool GLRenderer::updateMatrix(const RenderState& rstate, const RenderSorter::Renderable& r)
     {
-        if (rstate.transform_block)
+        if (r.transformBlock)
         {
-            mMatrixUniforms->setInt("u_matrix_offset", rstate.u_matrix_offset);
+            mMatrixUniforms->setInt("u_matrix_offset", r.matrixOffset);
             mMatrixUniforms->updateGPU(this, 0, 3 * sizeof(int));
         }
         else if (rstate.is_multiview)
         {
-            mMatrixUniforms->setFloatVec("u_matrices", glm::value_ptr(rstate.u_matrices[MVP]),
+            mMatrixUniforms->setFloatVec("u_matrices", glm::value_ptr(r.matrices[0]),
                                          2 * sizeof(glm::mat4) / sizeof(float));
             mMatrixUniforms->updateGPU(this, 4, 2 * sizeof(int) + 2 * sizeof(glm::mat4));
         }
         else
         {
-            mMatrixUniforms->setFloatVec("u_matrices", glm::value_ptr(rstate.u_matrices[MVP + rstate.u_right]),
+            mMatrixUniforms->setFloatVec("u_matrices", glm::value_ptr(r.matrices[rstate.u_right]),
                                          sizeof(glm::mat4) / sizeof(float));
             mMatrixUniforms->updateGPU(this, 4, 2 * sizeof(int) + sizeof(glm::mat4));
         }
-        mMatrixUniforms->bindBuffer(shader, this);
+        mMatrixUniforms->bindBuffer(r.shader, this);
         return true;
     }
 
-    bool GLRenderer::selectShader(RenderState& rstate, Shader* shader)
+    bool GLRenderer::selectShader(const RenderState& rstate, Shader* shader)
     {
         try
         {
@@ -536,43 +543,89 @@ namespace gvr
         return true;
     }
 
-    bool GLRenderer::selectMaterial(RenderState& rstate, ShaderData* material, Shader* shader)
+    bool GLRenderer::selectMaterial(const RenderSorter::Renderable& r)
     {
-        GLMaterial* glmtl = static_cast<GLMaterial*>(material);
-        return glmtl->bindToShader(shader, this) >= 0;
+        GLMaterial* glmtl = static_cast<GLMaterial*>(r.material);
+        return glmtl->bindToShader(r.shader, this) >= 0;
     }
 
-    bool GLRenderer::selectMesh(RenderState& rstate, const RenderSorter::Renderable& r)
+    void GLRenderer::updateState(const RenderState& rstate, const RenderSorter::Renderable& r)
     {
-        GLRenderData* rdata = static_cast<GLRenderData*>(r.renderData);
-        int drawMode = rdata->draw_mode();
+        Shader* shader = r.shader;
+        const RenderModes& rmodes = r.renderModes;
 
-        if ((drawMode == GL_LINE_STRIP) ||
-            (drawMode == GL_LINES) ||
-            (drawMode == GL_LINE_LOOP))
+        if (mCurrentState.shader != r.shader)
         {
-            float lineWidth;
-            if (r.material->getFloat("line_width", lineWidth))
-            {
-                glLineWidth(lineWidth);
-            }
-            else
-            {
-                glLineWidth(1.0f);
-            }
+#ifdef DEBUG_RENDER
+            LOGV("RENDER: selectShader %d", r.shader->getShaderID());
+#endif
+            mCurrentState.material = nullptr;
+            mCurrentState.mesh = nullptr;
+            mCurrentState.transformBlock = nullptr;
+            mCurrentState.shader = shader;
+            selectShader(rstate, shader);
         }
-        rdata->bindToShader(r.shader, this);
-        return true;
+        if (r.shader->usesMatrixUniforms())
+        {
+            if (r.transformBlock != mCurrentState.transformBlock)
+            {
+                r.transformBlock->bindBuffer(r.shader, this);
+                mCurrentState.transformBlock = r.transformBlock;
+            }
+            updateMatrix(rstate, r);
+        }
+        if (mCurrentState.material != r.material)
+        {
+#ifdef DEBUG_RENDER
+            LOGV("RENDER: selectMaterial %p", r.material);
+#endif
+            selectMaterial(r);
+            mCurrentState.material = r.material;
+        }
+        if (rmodes != mCurrentState.renderModes)
+        {
+            restoreRenderStates(mCurrentState.renderModes);
+            mCurrentState.renderModes = rmodes;
+            setRenderStates(rmodes);
+            render(rstate, r);
+        }
     }
 
-    void GLRenderer::render(Mesh* mesh, int drawMode)
+    void GLRenderer::render(const RenderState&rstate, const RenderSorter::Renderable& r)
     {
-        int         indexCount = mesh->getIndexCount();
-        int         vertexCount = mesh->getVertexCount();
+        updateState(rstate, r);
+        selectMesh(rstate, r);
+    }
 
+    bool GLRenderer::selectMesh(const RenderState& rstate, const RenderSorter::Renderable& r)
+    {
+        int indexCount = r.mesh->getIndexCount();
+        int vertexCount = r.mesh->getVertexCount();
+        int drawMode = r.renderModes.getDrawMode();
+        GLRenderData* rdata = static_cast<GLRenderData*>(r.renderData);
+
+        if (mCurrentState.mesh != r.mesh)
+        {
+            if ((drawMode == GL_LINE_STRIP) ||
+                (drawMode == GL_LINES) ||
+                (drawMode == GL_LINE_LOOP))
+            {
+                float lineWidth;
+                if (r.material->getFloat("line_width", lineWidth))
+                {
+                    glLineWidth(lineWidth);
+                }
+                else
+                {
+                    glLineWidth(1.0f);
+                }
+            }
+            mCurrentState.mesh = r.mesh;
+            rdata->bindToShader(r.shader, this);
+        }
         incrementTriangles(indexCount);
         incrementDrawCalls();
-        switch (mesh->getIndexSize())
+        switch (r.mesh->getIndexSize())
         {
             case 2:
             glDrawElements(drawMode, indexCount, GL_UNSIGNED_SHORT, 0);
