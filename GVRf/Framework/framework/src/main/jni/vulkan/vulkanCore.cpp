@@ -81,7 +81,7 @@ namespace gvr {
         imageMemoryBarrier.subresourceRange = subresourceRange;
 
         switch (oldImageLayout) {
-            case VK_IMAGE_LAYOUT_UNDEFINED:
+            default:
                 imageMemoryBarrier.srcAccessMask = 0;
                 break;
             case VK_IMAGE_LAYOUT_PREINITIALIZED:
@@ -93,6 +93,9 @@ namespace gvr {
         }
 
         switch (newImageLayout) {
+            default:
+                imageMemoryBarrier.dstAccessMask = 0;
+                break;
             case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
                 imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 break;

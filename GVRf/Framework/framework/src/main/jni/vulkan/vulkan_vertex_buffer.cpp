@@ -221,7 +221,7 @@ namespace gvr {
 
         if(type.compare("int4")==0 || type.compare("ivec4")==0)
             return VK_FORMAT_R32G32B32A32_SINT;
-
+        return VK_FORMAT_UNDEFINED;
     }
 } // end gvrf
 

@@ -96,7 +96,7 @@ public:
     virtual RenderData* createRenderData();
     virtual RenderData* createRenderData(RenderData*);
     virtual RenderPass* createRenderPass();
-    virtual ShadowMap* createShadowMap(ShaderData*) { }
+    virtual ShadowMap* createShadowMap(ShaderData*) { return nullptr; }
     virtual UniformBlock* createUniformBlock(const char* desc, int binding, const char* name, int maxelems);
     Image* createImage(int type, int format);
     virtual RenderTarget* createRenderTarget(Scene*, bool stereo);
@@ -119,9 +119,6 @@ public:
     virtual Light* createLight(const char* uniformDescriptor, const char* textureDescriptor);
     virtual void updatePostEffectMesh(Mesh*);
     virtual void validate(RenderSorter::Renderable& r);
-    virtual bool selectMesh(RenderState& rstate, const RenderSorter::Renderable& r) { };
-    virtual bool selectMaterial(RenderState& rstate, ShaderData* material, Shader* shader) { };
-    virtual bool selectShader(RenderState& rstate, Shader* shader) { };
     virtual void render(const RenderState&, const RenderSorter::Renderable&);
     virtual UniformBlock* createTransformBlock(int numMatrices);
 

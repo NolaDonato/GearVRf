@@ -101,7 +101,7 @@ public:
     virtual void render(const RenderState&, const RenderSorter::Renderable&);
 private:
     bool updateMatrix(const RenderState& rstate, const RenderSorter::Renderable& r);
-    bool selectMesh(const RenderState&, const RenderSorter::Renderable&);
+    void selectMesh(const RenderState&, const RenderSorter::Renderable&);
     bool selectMaterial(const RenderSorter::Renderable& r);
     bool selectShader(const RenderState& rstate, Shader* shader);
     void restoreRenderStates(const RenderModes&);
