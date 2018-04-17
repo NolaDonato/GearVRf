@@ -597,7 +597,7 @@ namespace gvr
         selectMesh(rstate, r);
     }
 
-    bool GLRenderer::selectMesh(const RenderState& rstate, const RenderSorter::Renderable& r)
+    void GLRenderer::selectMesh(const RenderState& rstate, const RenderSorter::Renderable& r)
     {
         int indexCount = r.mesh->getIndexCount();
         int vertexCount = r.mesh->getVertexCount();
