@@ -522,7 +522,7 @@ namespace gvr
             if (render_flags.invert_coverage_mask != flag)
             {
                 markDirty();
-                render_flags.invert_coverage_mask;
+                render_flags.invert_coverage_mask = flag;
             }
         }
 

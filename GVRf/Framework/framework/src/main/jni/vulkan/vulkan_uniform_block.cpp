@@ -157,7 +157,7 @@ namespace gvr {
         DataEntry *u = find(name);
 
         if (u == NULL)
-            return NULL;
+            return false;
 
         int bytesize = n * sizeof(float);
         char *data = getData(name, bytesize);
@@ -191,7 +191,7 @@ namespace gvr {
         DataEntry *u = find(name);
 
         if (u == NULL)
-            return NULL;
+            return false;
 
         int bytesize = n * sizeof(float);
         char *data = getData(name, bytesize);
