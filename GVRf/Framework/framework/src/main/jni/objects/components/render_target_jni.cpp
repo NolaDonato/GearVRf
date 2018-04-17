@@ -38,7 +38,7 @@ extern "C" {
     JNIEXPORT jlong JNICALL
     Java_org_gearvrf_NativeRenderTarget_defaultCtr(JNIEnv *env, jobject obj, jlong jscene, jboolean stereo);
 
-    JNIEXPORT jlong JNICALL
+    JNIEXPORT void JNICALL
     Java_org_gearvrf_NativeRenderTarget_attachRenderTarget(JNIEnv *env, jobject obj, jlong jrendertarget, jlong jnextrendertarget);
 
     JNIEXPORT void JNICALL
@@ -94,7 +94,7 @@ Java_org_gearvrf_NativeRenderTarget_setMainScene(JNIEnv *env, jobject obj, jlong
     target->setMainScene(scene);
 }
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT void JNICALL
 Java_org_gearvrf_NativeRenderTarget_attachRenderTarget(JNIEnv *env, jobject obj, jlong jrendertarget, jlong jnextrendertarget){
     RenderTarget* target = reinterpret_cast<RenderTarget*>(jrendertarget);
     RenderTarget* nextrendertarget = reinterpret_cast<RenderTarget*>(jnextrendertarget);
