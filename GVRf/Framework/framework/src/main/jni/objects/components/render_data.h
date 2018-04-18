@@ -360,7 +360,7 @@ namespace gvr
 
         unsigned short getRenderDataFlagsHashCode()
         {
-            return render_pass_list_[0]->render_modes().hash_code();
+            return render_pass_list_[0]->render_modes().getRenderFlags();
         }
 
         void setBindShaderObject(JNIEnv* env, jobject bindShaderObject);

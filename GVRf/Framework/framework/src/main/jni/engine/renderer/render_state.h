@@ -703,9 +703,9 @@ namespace gvr
             }
         }
 
-        uint64_t hash_code()
+        uint64_t getRenderFlags() const
         {
-            return *(reinterpret_cast<uint64_t*>(this));
+            return *(reinterpret_cast<const uint64_t*>(this));
         }
     };
 }

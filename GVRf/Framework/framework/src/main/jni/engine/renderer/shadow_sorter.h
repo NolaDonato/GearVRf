@@ -30,8 +30,11 @@ namespace gvr {
 class ShadowRenderSorter : public RenderSorter
 {
 public:
-    ShadowRenderSorter(ShaderData& material, Renderer& renderer, int numMatrices = 0)
-    : RenderSorter(renderer, "ShadowSorter", numMatrices),
+    ShadowRenderSorter(ShaderData& material,
+                       Renderer& renderer,
+                       int numMatrices = 0,
+                       bool forceTransformBlock = false)
+    : RenderSorter(renderer, "ShadowSorter", numMatrices, false),
       mShadowMaterial(material)
     {
         mDepthShader[0] = nullptr;

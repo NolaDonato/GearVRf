@@ -120,8 +120,12 @@ public:
      * @param renderer      Renderer to use for rendering
      * @param name          name of sorter
      * @param numMatrices   maximum number of matrices per transform block
+     * @param forceTransformBlock use transform block for all shaders
      */
-    RenderSorter(Renderer& renderer, const char* name, int numMatrices);
+    RenderSorter(Renderer& renderer,
+                 const char* name = "RenderSorter",
+                 int numMatrices = 0,
+                 bool forceTransformBlock = false);
 
     /**
      * Perform view frustum culling and accumulate the visible Renderables.
@@ -323,6 +327,7 @@ protected:
     BlockHeader*    mCurBlock;              // current block in memory pool
     int             mMaxElems;              // maximum number of elements in memory pool block
     int             mVisibleElems;          // current number of visible elements
+    bool            mForceTransformBlock;   // force all shaders to use the transform block
     glm::mat4       mOutputMatrices[10];    // temporary output matrix storage
     std::vector<UniformBlock*> mTransformBlocks; // list of transform blocks
 };

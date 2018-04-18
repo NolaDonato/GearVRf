@@ -28,13 +28,14 @@ namespace gvr {
 #define NUM_SCENE_MATRICES (MODEL - PROJECTION)
 #define MAX_MATRICES    45
 
-RenderSorter::RenderSorter(Renderer& renderer, const char* name = "RenderSorter", int numMatrices = 0)
+RenderSorter::RenderSorter(Renderer& renderer, const char* name, int numMatrices, bool forceTransformBlock)
     :   mRenderer(renderer),
         mMemoryPool(nullptr),
         mMaxElems(128),
         mCurBlock(nullptr),
         mTransBlockIndex(0),
         mName(name),
+        mForceTransformBlock(forceTransformBlock),
         mMaxMatricesPerBlock(0),
         mNumMatricesInBlock(0)
 {
@@ -228,10 +229,29 @@ void RenderSorter::updateTransform(RenderState& rstate, Renderable& r)
     rstate.u_matrices[MODEL] = r.matrices[0];
     rstate.u_matrices[MVP] = rstate.u_matrices[VIEW_PROJ] * rstate.u_matrices[MODEL];
     rstate.u_matrices[MVP + 1] = rstate.u_matrices[VIEW_PROJ + 1] * rstate.u_matrices[MODEL];
-
-    if (numMatrices > 0)
+    r.transformBlock = nullptr;
+    r.matrixOffset = -1;
+    if (r.shader->usesMatrixUniforms())
     {
         numMatrices = r.shader->calcMatrix(rstate.u_matrices, mOutputMatrices);
+        if (numMatrices == 0)
+        {
+            if (mForceTransformBlock)
+            {
+                numMatrices = 2;
+                mOutputMatrices[0] = rstate.u_matrices[MVP];
+                mOutputMatrices[1] = rstate.u_matrices[MVP + 1];
+            }
+            else
+            {
+                r.matrices[0] = rstate.u_matrices[MVP];
+                r.matrices[1] = rstate.u_matrices[MVP + 1];
+                return;
+            }
+        }
+    }
+    if (numMatrices > 0)
+    {
         updateTransformBlock(r, numMatrices, (const float*) mOutputMatrices);
 #ifdef DEBUG_TRANSFORM
         for (int i = 0; i < numMatrices; ++i)
@@ -239,19 +259,6 @@ void RenderSorter::updateTransform(RenderState& rstate, Renderable& r)
             std::string s = glm::to_string(mOutputMatrices[i]);
             LOGV("TRANSFORM: output matrix %d %s", i, s.c_str());
         }
-#endif
-    }
-    else
-    {
-        r.transformBlock = nullptr;
-        r.matrixOffset = -1;
-        r.matrices[0] = rstate.u_matrices[MVP];
-        r.matrices[1] = rstate.u_matrices[MVP + 1];
-#ifdef DEBUG_TRANSFORM
-        std::string s = glm::to_string(r.matrices[0]);
-        LOGV("TRANSFORM: LEFT MVP %s", s.c_str());
-        s = glm::to_string(r.matrices[1]);
-        LOGV("TRANSFORM: RIGHT MVP %s", s.c_str());
 #endif
     }
 }

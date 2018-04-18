@@ -17,6 +17,7 @@
 #define MAIN_SCENE_SORTER_H_
 
 #include "render_sorter.h"
+#include <initializer_list>
 
 namespace gvr {
 /**
@@ -30,30 +31,46 @@ namespace gvr {
 class MainSceneSorter : public RenderSorter
 {
 public:
-    MainSceneSorter(Renderer& renderer, int numMatrices = 0)
-    : RenderSorter(renderer, "MainSorter", numMatrices)
+    enum SortOption
     {
-    }
+        RENDER_ORDER = 0,
+        DISTANCE,
+        SHADER,
+        MESH,
+        MATERIAL
+    };
 
+    MainSceneSorter(Renderer& renderer, int numMatrices = 0, bool forceTransformBlock = false);
     virtual void cull(RenderState& rstate);
 
+    /**
+     * Set the sort criteria for each level.
+     * @param list list of SortOptions in braces
+     */
+    void setSortOptions(std::initializer_list<SortOption> list);
+
 protected:
+    typedef void   (MainSceneSorter::*MERGEFUNC)(Renderable* list, Renderable* item, int level);
+
     virtual void merge(Renderable* item);
     virtual void add(RenderState& rstate, SceneObject* object);
     virtual void validate(RenderState&);
     virtual bool isValid(RenderState& rstate, Renderable& r);
-    virtual void mergeByOrder(Renderable* list, Renderable* item);
-    virtual void mergeByShader(Renderable* list, Renderable* item);
-    virtual void mergeByMesh(Renderable* list, Renderable* item);
-    virtual void mergeByMaterial(Renderable* list, Renderable* item);
-    virtual void mergeByDistance(Renderable* list, Renderable* item);
+    void mergeByOrder(Renderable* list, Renderable* item, int level);
+    void mergeByShader(Renderable* list, Renderable* item, int level);
+    void mergeByMesh(Renderable* list, Renderable* item, int level);
+    void mergeByMaterial(Renderable* list, Renderable* item, int level);
+    void mergeByDistance(Renderable* list, Renderable* item, int level);
+    void mergeByMode(Renderable* list, Renderable* item, int level);
 
 private:
     MainSceneSorter(const MainSceneSorter&) = delete;
     MainSceneSorter(MainSceneSorter&&) = delete;
     MainSceneSorter& operator=(const MainSceneSorter&) = delete;
     MainSceneSorter& operator=(MainSceneSorter&&) = delete;
-};
+    MERGEFUNC mAllMergeFunctions[6];
+    MERGEFUNC mMergeFunctions[10]; //  merge functions for each level
+ };
 
 
 }

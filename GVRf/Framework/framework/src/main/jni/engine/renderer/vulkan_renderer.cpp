@@ -77,7 +77,7 @@ UniformBlock* VulkanRenderer::createTransformBlock(int numMatrices)
 RenderTarget* VulkanRenderer::createRenderTarget(Scene* scene, bool stereo)
 {
     VkRenderTarget* renderTarget = new VkRenderTarget(scene, stereo);
-    RenderSorter* sorter = new MainSceneSorter(*this);
+    RenderSorter* sorter = new MainSceneSorter(*this, 0, true);
     renderTarget->setRenderSorter(sorter);
     return renderTarget;
 }
@@ -85,7 +85,7 @@ RenderTarget* VulkanRenderer::createRenderTarget(Scene* scene, bool stereo)
 RenderTarget* VulkanRenderer::createRenderTarget(RenderTexture* renderTexture, bool isMultiview, bool isStereo)
 {
     VkRenderTarget* renderTarget = new VkRenderTarget(renderTexture, isMultiview, isStereo);
-    RenderSorter* sorter = new MainSceneSorter(*this);
+    RenderSorter* sorter = new MainSceneSorter(*this, 0, true);
     renderTarget->setRenderSorter(sorter);
     return renderTarget;
 }
@@ -93,7 +93,7 @@ RenderTarget* VulkanRenderer::createRenderTarget(RenderTexture* renderTexture, b
 RenderTarget* VulkanRenderer::createRenderTarget(RenderTexture* renderTexture, const RenderTarget* renderTarget)
 {
     VkRenderTarget* vkTarget = new VkRenderTarget(renderTexture, renderTarget);
-    RenderSorter* sorter = new MainSceneSorter(*this);
+    RenderSorter* sorter = new MainSceneSorter(*this, 0, true);
     vkTarget->setRenderSorter(sorter);
     return vkTarget;
 }
