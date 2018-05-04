@@ -87,15 +87,10 @@ public class GVRShader
             + "};\n";
 
     protected static String sTransformCode =
-            "#ifdef HAS_MULTIVIEW\n"
-            + "   #define u_mvp u_matrices[gl_ViewID_OVR]\n"
-            + "   uniform mat4 u_matrices[2];\n"
-            + "#else\n"
-            + "   #define u_mvp u_matrices[0]\n"
-            + "   uniform mat4 u_matrices[1];\n"
-            + "#endif\n"
+            "#define u_mvp u_matrices[0]\n"
             + "uniform uint u_right;\n"
-            + "uniform uint u_render_mask;\n";
+            + "uniform uint u_render_mask;\n"
+            + "uniform mat4 u_matrices[1];\n";
 
     protected static String sTransformVkUBOCode =
             "#ifdef HAS_MULTIVIEW\n"

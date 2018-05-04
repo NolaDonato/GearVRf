@@ -123,8 +123,16 @@ void main() {
 	view_direction = vertex.view_direction;
 #ifdef HAS_MULTIVIEW
 	bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-    if (!render_mask)
+    if (render_mask)
+    {
+        if (gl_ViewID_OVR) fix the mvp
+    }
+    else
+    {
         mvp = mat4(0.0);  //  if render_mask is not set for particular eye, dont render that object
+    }
+#else
+    if (u_right) fix the mvp
 #endif
     gl_Position = mvp  * vertex.local_position;
 }

@@ -188,7 +188,7 @@ void RenderSorter::add(RenderState& rstate, SceneObject* object)
     Renderable* r = alloc();
 
     r->mesh = geometry;
-    r->matrices[0] = object->transform()->getModelMatrix();
+    r->mvp = object->transform()->getModelMatrix();
     r->renderData = rdata;
     r->nextLevel = nullptr;
     r->nextSibling = nullptr;
@@ -210,7 +210,7 @@ RenderSorter::Renderable* RenderSorter::add(RenderState& rstate, Renderable& r)
         *elem = r;
         elem->mesh = r.renderData->mesh();
         elem->renderModes = r.renderPass->render_modes();
-        elem->matrices[0] = glm::mat4();
+        elem->mvp = glm::mat4();
         elem->matrixOffset = -1;
         elem->nextLevel = nullptr;
         elem->nextSibling = nullptr;
@@ -226,7 +226,7 @@ void RenderSorter::updateTransform(RenderState& rstate, Renderable& r)
 {
     int numMatrices = r.shader->getOutputBufferSize();
 
-    rstate.u_matrices[MODEL] = r.matrices[0];
+    rstate.u_matrices[MODEL] = r.mvp;
     rstate.u_matrices[MVP] = rstate.u_matrices[VIEW_PROJ] * rstate.u_matrices[MODEL];
     rstate.u_matrices[MVP + 1] = rstate.u_matrices[VIEW_PROJ + 1] * rstate.u_matrices[MODEL];
     r.transformBlock = nullptr;
@@ -238,14 +238,12 @@ void RenderSorter::updateTransform(RenderState& rstate, Renderable& r)
         {
             if (mForceTransformBlock)
             {
-                numMatrices = 2;
+                numMatrices = 1;
                 mOutputMatrices[0] = rstate.u_matrices[MVP];
-                mOutputMatrices[1] = rstate.u_matrices[MVP + 1];
             }
             else
             {
-                r.matrices[0] = rstate.u_matrices[MVP];
-                r.matrices[1] = rstate.u_matrices[MVP + 1];
+                r.mvp = rstate.u_matrices[MVP];
                 return;
             }
         }

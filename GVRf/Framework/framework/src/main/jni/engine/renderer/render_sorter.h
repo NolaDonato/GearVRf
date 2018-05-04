@@ -82,7 +82,7 @@ public:
         ShaderData*     material;               // material to use
         Shader*         shader;                 // shader to use
         Mesh*           mesh;                   // mesh to render
-        glm::mat4       matrices[2];            // left and right model, view, projection
+        glm::mat4       mvp;                    // model, view, projection
         UniformBlock*   transformBlock;         // uniform block with transforms
         Renderable*     nextLevel;              // next descendant
         Renderable*     nextSibling;            // next sibling

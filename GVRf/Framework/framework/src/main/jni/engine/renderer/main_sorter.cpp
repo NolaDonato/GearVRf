@@ -92,7 +92,7 @@ void MainSceneSorter::add(RenderState& rstate, SceneObject* object)
         Renderable* r = alloc();
 
         r->mesh = geometry;
-        r->matrices[0] = object->transform()->getModelMatrix();
+        r->mvp = object->transform()->getModelMatrix();
         r->renderData = rdata;
         r->renderPass = rpass;
         r->material = rpass->material();
