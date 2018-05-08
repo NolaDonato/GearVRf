@@ -27,12 +27,12 @@ void main()
 
 #ifdef HAS_MULTIVIEW
     bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-    if (!render_mask)
-    {
-        mvp = mat4(0.0);  //  if render_mask is not set for particular eye, dont render that object
-    }
+    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(gl_ViewID_OVR));
+    mvp = mvp * float(render_mask);
 #else
     mvp = u_mvp;
+    //generate right eye mvp from left
+    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(u_right));
     mv  = u_mv;
 #endif
     vec4 v_viewspace_position_vec4 = mv * vec4(a_position,1.0);
