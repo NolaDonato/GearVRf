@@ -88,6 +88,7 @@ public class GVRShader
 
     protected static String sTransformCode =
             "#define u_mvp u_matrices[0]\n"
+            + "uniform float u_proj_offset;\n"
             + "uniform uint u_right;\n"
             + "uniform uint u_render_mask;\n"
             + "uniform mat4 u_matrices[1];\n";

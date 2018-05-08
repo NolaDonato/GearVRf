@@ -37,7 +37,7 @@ namespace gvr
 
     GLRenderer::GLRenderer() : Renderer()
     {
-        mMatrixUniforms = createUniformBlock("uint u_matrix_offset; uint u_right; uint u_render_mask; mat4 u_matrices[1]", MATRIX_UBO_INDEX, "MatrixUniforms", 0);
+        mMatrixUniforms = createUniformBlock("uint u_matrix_offset; uint u_right; uint u_render_mask; float u_proj_offset; mat4 u_matrices[1]", MATRIX_UBO_INDEX, "MatrixUniforms", 0);
         mMatrixUniforms->useGPUBuffer(false);
         glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &mMaxUniformBlockSize);
         glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &mMaxArrayFloats);
@@ -478,16 +478,19 @@ namespace gvr
 
     bool GLRenderer::updateMatrix(const RenderState& rstate, const RenderSorter::Renderable& r)
     {
+        float offset = rstate.camera->getProjectionMatrix()[0][0] * CameraRig::default_camera_separation_distance();
+        mMatrixUniforms->setFloat("u_proj_offset", offset);
+
         if (r.transformBlock)
         {
             mMatrixUniforms->setInt("u_matrix_offset", r.matrixOffset);
-            mMatrixUniforms->updateGPU(this, 0, 3 * sizeof(int));
+            mMatrixUniforms->updateGPU(this, 0, 3 * sizeof(int) + sizeof(float));
         }
         else
         {
             mMatrixUniforms->setFloatVec("u_matrices", glm::value_ptr(r.mvp),
                                          sizeof(glm::mat4) / sizeof(float));
-            mMatrixUniforms->updateGPU(this, 4, 2 * sizeof(int) + sizeof(glm::mat4));
+            mMatrixUniforms->updateGPU(this, 4, 2 * sizeof(int) + sizeof(float) + sizeof(glm::mat4) );
         }
         mMatrixUniforms->bindBuffer(r.shader, this);
         return true;
