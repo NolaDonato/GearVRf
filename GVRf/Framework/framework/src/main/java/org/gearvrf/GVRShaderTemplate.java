@@ -464,6 +464,10 @@ public class GVRShaderTemplate extends GVRShader
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
             }
+            else
+            {
+                Log.i(TAG, "SHADER: found shader #%d %s", nativeShader, signature);
+            }
             if (nativeShader > 0)
             {
                 rdata.setShader(nativeShader, isMultiview);
@@ -514,6 +518,10 @@ public class GVRShaderTemplate extends GVRShader
                     writeShader(context, "F-" + signature + ".glsl", fragmentShaderSource);
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
+            }
+            else
+            {
+                Log.i(TAG, "SHADER: found shader #%d %s", nativeShader, signature);
             }
             return nativeShader;
         }

@@ -32,8 +32,11 @@ layout(location = 7) in ivec4 a_bone_indices;
 #endif
 
 #ifdef HAS_VertexNormalShader
+#ifdef HAS_a_tangent
 layout(location = 8) in vec3 a_tangent;
 layout(location = 9) in vec3 a_bitangent;
+layout(location = 16) out mat3 tangent_matrix;
+#endif
 #endif
 
 layout(location = 0) out vec3 view_direction;
@@ -45,6 +48,7 @@ layout(location = 5) out vec2 ambient_coord;
 layout(location = 6) out vec2 specular_coord;
 layout(location = 7) out vec2 emissive_coord;
 layout(location = 8) out vec2 lightmap_coord;
+layout(location = 9) out vec2 normal_coord;
 
 struct Vertex
 {

@@ -6,6 +6,7 @@
 #endif
 
 vertex.viewspace_position = pos.xyz / pos.w;
+
 #ifdef HAS_a_normal
    vertex.local_normal = vec4(normalize(a_normal), 0.0);
 #endif
@@ -15,8 +16,7 @@ vertex.viewspace_position = pos.xyz / pos.w;
 #else
 	vertex.viewspace_normal = normalize((u_mv_it * vertex.local_normal).xyz);
 #endif
-
-vertex.view_direction = normalize(-vertex.viewspace_position);
+   vertex.view_direction = normalize(-vertex.viewspace_position);
 #ifdef HAS_a_texcoord
 //
 // Default to using the first set of texture coordinates

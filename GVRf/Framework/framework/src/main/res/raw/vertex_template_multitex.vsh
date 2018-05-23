@@ -33,8 +33,11 @@ layout(location = 7) in ivec4 a_bone_indices;
 #endif
 
 #ifdef HAS_VertexNormalShader
+#ifdef HAS_a_tangent
 layout(location = 8) in vec3 a_tangent;
 layout(location = 9) in vec3 a_bitangent;
+layout(location = 16) out mat3 tangent_matrix;
+#endif
 #endif
 
 layout(location = 0) out vec3 view_direction;
@@ -49,6 +52,7 @@ layout(location = 7) out vec2 emissive_coord;
 layout(location = 8) out vec2 lightmap_coord;
 layout(location = 9) out vec2 opacity_coord;
 layout(location = 10) out vec2 normal_coord;
+
 layout(location = 11) out vec2 diffuse_coord1;
 layout(location = 12) out vec2 ambient_coord1;
 layout(location = 13) out vec2 specular_coord1;
@@ -86,7 +90,7 @@ struct Vertex
 // This section contains code to compute
 // vertex contributions to lighting.
 //
-	@LIGHTSOURCES
+@LIGHTSOURCES
 #endif
 	
 void main() {
@@ -94,37 +98,43 @@ void main() {
 
 	vertex.local_position = vec4(a_position.xyz, 1.0);
 	vertex.local_normal = vec4(0.0, 0.0, 1.0, 0.0);
-	@VertexShader
+
+@VertexShader
+
 #ifdef HAS_VertexSkinShader
-	@VertexSkinShader
+@VertexSkinShader
 #endif
+
 #ifdef HAS_VertexNormalShader
-	@VertexNormalShader
+@VertexNormalShader
 #endif
+
 #ifdef HAS_LIGHTSOURCES
 //
 // This section contains code to compute
 // vertex contributions to lighting.
 //
-	LightVertex(vertex);
+    LightVertex(vertex);
 #endif
+
 #ifdef HAS_TEXCOORDS
 //
 // This section contains assignment statements from
 // input vertex attributes to output shader variables
 // generate by GVRShaderTemplate during shader construction.
 //
-	@TEXCOORDS
+@TEXCOORDS
+
 #endif
 	viewspace_position = vertex.viewspace_position;
 	viewspace_normal = vertex.viewspace_normal;
 	view_direction = vertex.view_direction;
 #ifdef HAS_MULTIVIEW
-	    bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-        mat4 mvp = u_mvp_[gl_ViewID_OVR];
-        if(!render_mask)
-            mvp = mat4(0.0);  //  if render_mask is not set for particular eye, dont render that object
-        gl_Position = mvp  * vertex.local_position;
+    bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
+    mat4 mvp = u_mvp_[gl_ViewID_OVR];
+    if(!render_mask)
+        mvp = mat4(0.0);  //  if render_mask is not set for particular eye, dont render that object
+    gl_Position = mvp  * vertex.local_position;
 #else
 	gl_Position = u_mvp * vertex.local_position;	
 #endif	

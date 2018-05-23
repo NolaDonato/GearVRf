@@ -362,21 +362,83 @@ public class GVRSphereSceneObject extends GVRSceneObject {
                 facingOut, material, stackSegmentNumber, sliceSegmentNumber);
     }
 
-    private void generateSphereObject(GVRContext gvrContext, int stackNumber,
-            int sliceNumber, boolean facingOut, GVRMaterial material, float radius) {
+
+    /**
+     * Constructs a sphere scene object with a radius of 1 and user specified
+     * stack and slice numbers. The sphere is subdivided into MxN meshes, where M=sliceSegmengNumber and N=(stackSegmentNumber+2) are specified by user.
+     *
+     * The sphere's triangles and normals are facing either in or out and the
+     * same material will be applied to each side of the sphere.
+     *
+     * @param gvrContext
+     *            current {@link GVRContext}
+     *
+     * @param meshDesc
+     *            string descriptor for vertex buffer of sphere mesh.
+     * @param stackNumber
+     *            the number of stacks for the sphere. It should be equal or
+     *            greater than 3.
+     *
+     * @param sliceNumber
+     *            the number of slices for the sphere. It should be equal or
+     *            greater than 4.
+     *
+     * @param facingOut
+     *            whether the triangles and normals should be facing in or
+     *            facing out.
+     *
+     * @param material
+     *            the material for the sphere.
+     */
+    public GVRSphereSceneObject(GVRContext gvrContext, String meshDesc,
+                                int stackNumber, int sliceNumber, boolean facingOut, float radius, GVRMaterial material)
+    {
+        super(gvrContext);
+
+        // assert stackNumber>=3
+        if (stackNumber < 3) {
+            throw new IllegalArgumentException(
+                    "Stack number should be equal or greater than 3.");
+        }
+
+        // assert sliceNumber>=4
+        if (sliceNumber < 4) {
+            throw new IllegalArgumentException(
+                    "Slice number should be equal or greater than 4.");
+        }
+        GVRMesh mesh = createSphere(gvrContext, meshDesc, radius, facingOut, stackNumber, sliceNumber);
+        GVRRenderData renderData = new GVRRenderData(gvrContext, material);
+        attachComponent(renderData);
+        renderData.setMesh(mesh);
+    }
+
+    public GVRMesh createSphere(GVRContext ctx, String meshDesc, float radius, boolean facingOut,
+                             int stackNumber, int sliceNumber)
+    {
         generateSphere(stackNumber, sliceNumber, facingOut);
 
-        // multiply by radius > 0
-        //float radius = 1;
-        for (int i = 0; i < vertices.length; i++) {
+        for (int i = 0; i < vertices.length; i++)
+        {
             vertices[i] *= radius;
         }
-        GVRMesh mesh = new GVRMesh(gvrContext, "float3 a_position float2 a_texcoord float3 a_normal");
+        GVRMesh mesh = new GVRMesh(ctx, meshDesc);
         mesh.setVertices(vertices);
-        mesh.setNormals(normals);
-        mesh.setTexCoords(texCoords);
+        if (meshDesc.contains("a_normal"))
+        {
+            mesh.setNormals(normals);
+        }
+        if (meshDesc.contains("a_texcoord"))
+        {
+            mesh.setTexCoords(texCoords);
+        }
         mesh.setIndices(indices);
+        return mesh;
+    }
 
+    private void generateSphereObject(GVRContext gvrContext, int stackNumber,
+            int sliceNumber, boolean facingOut, GVRMaterial material, float radius) {
+        GVRMesh mesh = createSphere(gvrContext, "float3 a_position, float2 a_texcoord, float3 a_normal ",
+                                    radius, facingOut, sliceNumber, stackNumber);
         GVRRenderData renderData = new GVRRenderData(gvrContext, material);
         attachComponent(renderData);
         renderData.setMesh(mesh);
