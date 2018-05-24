@@ -1,7 +1,5 @@
 package org.gearvrf;
 
-import android.opengl.GLES20;
-
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -42,14 +40,13 @@ import org.gearvrf.jassimp.GVRNewWrapperProvider;
 import org.gearvrf.jassimp.Jassimp;
 import org.gearvrf.jassimp.JassimpConfig;
 import org.gearvrf.scene_objects.GVRModelSceneObject;
-import org.gearvrf.shaders.GVRPBRShader;
 import org.gearvrf.utility.Log;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import static java.lang.Integer.parseInt;
 
-class   GVRJassimpAdapter {
+class GVRJassimpAdapter {
     private static final String TAG = GVRJassimpAdapter.class.getSimpleName();
     public static GVRNewWrapperProvider sWrapperProvider = new GVRNewWrapperProvider();
     private GVRAssetLoader  mLoader;
@@ -656,12 +653,9 @@ class   GVRJassimpAdapter {
 
             /* Ambient color */
                 AiColor ambientColor = material.getAmbientColor(sWrapperProvider);
-                if (meshMaterial.hasUniform("ambient_color"))
-                {
-                    meshMaterial.setAmbientColor(ambientColor.getRed(),
-                                                 ambientColor.getGreen(), ambientColor.getBlue(),
-                                                 ambientColor.getAlpha());
-                }
+                meshMaterial.setAmbientColor(ambientColor.getRed(),
+                                             ambientColor.getGreen(), ambientColor.getBlue(),
+                                             ambientColor.getAlpha());
 
 
             /* Emissive color */
@@ -697,7 +691,6 @@ class   GVRJassimpAdapter {
         textureMap.put(AiTextureType.DISPLACEMENT,"displacement");
         textureMap.put(AiTextureType.LIGHTMAP,"lightmap");
         textureMap.put(AiTextureType.REFLECTION,"reflection");
-        textureMap.put(AiTextureType.UNKNOWN, "metallicRoughness");
     }
 
     private static final Map<AiTextureMapMode, GVRTextureParameters.TextureWrapType> wrapModeMap;
@@ -712,22 +705,9 @@ class   GVRJassimpAdapter {
         wrapModeMap.put(AiTextureMapMode.GL_MIRRORED_REPEAT, GVRTextureParameters.TextureWrapType.GL_MIRRORED_REPEAT );
     }
 
-    private static final Map<Integer, GVRTextureParameters.TextureFilterType> filterMap;
-    static
-    {
-        filterMap = new HashMap<Integer, GVRTextureParameters.TextureFilterType>();
-        filterMap.put(GLES20.GL_LINEAR, GVRTextureParameters.TextureFilterType.GL_LINEAR);
-        filterMap.put(GLES20.GL_NEAREST, GVRTextureParameters.TextureFilterType.GL_NEAREST);
-        filterMap.put(GLES20.GL_NEAREST_MIPMAP_NEAREST, GVRTextureParameters.TextureFilterType.GL_NEAREST_MIPMAP_NEAREST);
-        filterMap.put(GLES20.GL_NEAREST_MIPMAP_LINEAR, GVRTextureParameters.TextureFilterType.GL_NEAREST_MIPMAP_LINEAR);
-        filterMap.put(GLES20.GL_LINEAR_MIPMAP_NEAREST, GVRTextureParameters.TextureFilterType.GL_LINEAR_MIPMAP_NEAREST);
-        filterMap.put(GLES20.GL_LINEAR_MIPMAP_LINEAR, GVRTextureParameters.TextureFilterType.GL_LINEAR_MIPMAP_LINEAR);
-    }
-
     private GVRMaterial createMaterial(AiMaterial material, EnumSet<GVRImportSettings> settings)
     {
         boolean layered = false;
-        GVRShaderId shaderType;
 
         for (final AiTextureType texType : AiTextureType.values())
         {
@@ -739,49 +719,14 @@ class   GVRJassimpAdapter {
                 }
             }
         }
-        if (!settings.contains(GVRImportSettings.NO_LIGHTING))
-        {
-            try
-            {
-                boolean glosspresent = material.getSpecularGlossinessUsage();
-                shaderType = new GVRShaderId(GVRPBRShader.class);
-                GVRMaterial m = new GVRMaterial(mContext, shaderType);
-
-                //use specular glossiness workflow, if present
-                if(glosspresent)
-                {
-                    AiColor diffuseFactor = material.getDiffuseColor(sWrapperProvider);
-                    AiColor specularFactor = material.getSpecularColor(sWrapperProvider);
-                    //gltf2importer.cpp in the assimp lib defines shininess as glossiness_factor * 1000.0f
-                    float glossinessFactor = material.getShininess() / 1000.0f;
-
-                    m.setDiffuseColor(diffuseFactor.getRed(), diffuseFactor.getGreen(), diffuseFactor.getBlue(), diffuseFactor.getAlpha());
-                    m.setSpecularColor(specularFactor.getRed(), specularFactor.getGreen(), specularFactor.getBlue(), specularFactor.getAlpha());
-                    m.setFloat("glossinessFactor", glossinessFactor);
-                }
-                else {
-                    float metallic = material.getMetallic();
-                    float roughness = material.getRoughness();
-                    AiColor baseColorFactor = material.getDiffuseColor(sWrapperProvider);
-
-                    m.setFloat("roughness", roughness);
-                    m.setFloat("metallic", metallic);
-                    m.setDiffuseColor(baseColorFactor.getRed(), baseColorFactor.getGreen(), baseColorFactor.getBlue(), baseColorFactor.getAlpha());
-                }
-                return m;
-            }
-            catch (IllegalArgumentException e)
-            {
-                shaderType = GVRMaterial.GVRShaderType.Phong.ID;
-            }
-            if (layered)
-            {
-                shaderType = GVRMaterial.GVRShaderType.PhongLayered.ID;
-            }
-        }
-        else
+        GVRShaderId shaderType = GVRMaterial.GVRShaderType.Phong.ID;
+        if (settings.contains(GVRImportSettings.NO_LIGHTING))
         {
             shaderType = GVRMaterial.GVRShaderType.Texture.ID;
+        }
+        else if (layered)
+        {
+            shaderType = GVRMaterial.GVRShaderType.PhongLayered.ID;
         }
         return new GVRMaterial(mContext, shaderType);
     }
@@ -797,7 +742,6 @@ class   GVRJassimpAdapter {
         String texCoordKey = "a_texcoord";
         String shaderKey = typeName + "_coord";
         final String texFileName = aimtl.getTextureFile(texType, texIndex);
-        final boolean usingPBR = (gvrmtl.getShaderType() == mContext.getShaderManager().getShaderType(GVRPBRShader.class));
 
         if (uvIndex > 0)
         {
@@ -810,11 +754,6 @@ class   GVRJassimpAdapter {
         }
         if (texIndex > 0)
         {
-            if (usingPBR)
-            {
-                assetRequest.onTextureError(mContext, textureKey + " duplicate ignored for PBR renderer" + mFileName, mFileName);
-                return;
-            }
             textureKey += texIndex;
             shaderKey += texIndex;
             gvrmtl.setInt(textureKey + "_blendop", blendop);
@@ -822,9 +761,6 @@ class   GVRJassimpAdapter {
         GVRTextureParameters texParams = new GVRTextureParameters(mContext);
         texParams.setWrapSType(wrapModeMap.get(aimtl.getTextureMapModeU(texType, texIndex)));
         texParams.setWrapTType(wrapModeMap.get(aimtl.getTextureMapModeV(texType, texIndex)));
-        texParams.setMinFilterType(filterMap.get(aimtl.getTextureMinFilter(texType, texIndex)));
-        texParams.setMagFilterType(filterMap.get(aimtl.getTextureMagFilter(texType, texIndex)));
-
         GVRTexture gvrTex = new GVRTexture(mContext, texParams);
         GVRAssetLoader.TextureRequest texRequest;
 
@@ -866,6 +802,10 @@ class   GVRJassimpAdapter {
     {
         for (final AiTextureType texType : AiTextureType.values())
         {
+            if (texType == AiTextureType.UNKNOWN)
+            {
+                continue;
+            }
             for (int i = 0; i < aimtl.getNumTextures(texType); ++i)
             {
                 final String texFileName = aimtl.getTextureFile(texType, i);
