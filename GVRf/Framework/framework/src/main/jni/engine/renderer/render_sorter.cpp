@@ -25,7 +25,8 @@
 
 namespace gvr {
 
-#define NUM_SCENE_MATRICES (MODEL - PROJECTION)
+//#define NUM_SCENE_MATRICES (MODEL - PROJECTION)
+#define NUM_SCENE_MATRICES 3
 #define MAX_MATRICES    64
 
 RenderSorter::RenderSorter(Renderer& renderer, const char* name, int numMatrices, bool forceTransformBlock)
@@ -359,9 +360,10 @@ void RenderSorter::sort(RenderState& rstate)
         UniformBlock* transformBlock = *it;
         if ((transformBlock != nullptr) && (transformBlock->getNumElems() > NUM_SCENE_MATRICES))
         {
-            glm::mat4* matrices = &rstate.u_matrices[PROJECTION];
             int nbytes = transformBlock->getNumElems() * transformBlock->getElemSize();
-            transformBlock->setRange(0, matrices, NUM_SCENE_MATRICES);
+            transformBlock->setRange(0, &rstate.u_matrices[PROJECTION], 1);
+            transformBlock->setRange(1, &rstate.u_matrices[VIEW], 1);
+            transformBlock->setRange(2, &rstate.u_matrices[VIEW_INVERSE], 1);
             transformBlock->updateGPU(&mRenderer, 0, nbytes);
             transformBlock->setNumElems(NUM_SCENE_MATRICES);
         }
