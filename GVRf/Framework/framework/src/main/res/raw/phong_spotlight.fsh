@@ -26,7 +26,7 @@ Radiance Radiance@LightType(in U@LightType data, int index)
 void Fragment@LightType(Surface s)
 {
 #if @LightType_MAXQUALITY > 1
-    for (int i = 0; i < @LightType_PIXEL_LIGHTS; ++i)
+    for (int i = @LightType_VERTEX_LIGHTS; i < @LightType_TOTAL_LIGHTS; ++i)
     {
         U@LightType light = @LightType[i];
 
