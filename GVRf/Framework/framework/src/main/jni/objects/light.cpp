@@ -96,13 +96,13 @@ namespace gvr
     ShadowMap* Light::makeShadowMap(Scene* scene, jobject javaSceneObject, ShaderManager* shader_manager, int layerIndex)
     {
         ShadowMap* shadowMap = getShadowMap();
-        float shadow_map_index = -1;
-        getFloat("shadow_map_index", shadow_map_index);
+        int shadow_map_index = -1;
+        getInt("shadow_map_index", shadow_map_index);
         if ((shadowMap == nullptr) || !shadowMap->hasTexture())
         {
             if (shadow_map_index >= 0)
             {
-                setFloat("shadow_map_index", -1);
+                setInt("shadow_map_index", -1);
 #ifdef DEBUG_LIGHT
                 LOGD("LIGHT: %s shadow_map_index = %f", getLightClass(), shadow_map_index);
 #endif
@@ -114,7 +114,7 @@ namespace gvr
 #ifdef DEBUG_LIGHT
             LOGD("LIGHT: %s shadow_map_index = %d", getLightClass(), layerIndex);
 #endif
-            setFloat("shadow_map_index", (float) layerIndex);
+            setInt("shadow_map_index", layerIndex);
         }
         shadowMap->setLayerIndex(layerIndex);
         shadowMap->setMainScene(scene);
@@ -128,13 +128,13 @@ namespace gvr
         std::ostringstream stream;
 
         forEachUniform([&stream, this](const DataDescriptor::DataEntry& entry) mutable
-                       {
-                           int nelems = entry.Count;
-                           if (nelems > 1)
-                               stream << entry.Type << " " << entry.Name << "[" << nelems << "];" << std::endl;
-                           else
-                               stream << entry.Type << " " << entry.Name << ";" << std::endl;
-                       });
+         {
+             int nelems = entry.Count;
+             if (nelems > 1)
+                 stream << entry.Type << " " << entry.Name << "[" << nelems << "];" << std::endl;
+             else
+                 stream << entry.Type << " " << entry.Name << ";" << std::endl;
+         });
         layout = stream.str();
         return uniforms().uniforms().getTotalSize();
     }

@@ -70,14 +70,16 @@ public class GVRSpotLight extends GVRPointLight
     protected final static String SPOT_UNIFORM_DESC = POINT_UNIFORM_DESC
             + " float inner_cone_angle; float outer_cone_angle; float spad1; float spad2;"
             + " float4 sm0; float4 sm1; float4 sm2; float4 sm3";
+    protected final static String SPOT_VERTEX_DESC =
+            "float4 shadow_position; ";
 
     public GVRSpotLight(GVRContext gvrContext)
     {
-        this(gvrContext, SPOT_UNIFORM_DESC, "vec4 shadow_position");
+        this(gvrContext, SPOT_UNIFORM_DESC, SPOT_VERTEX_DESC);
         if (fragmentShader == null)
-            fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.spotshadowlight);
+            fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.phong_spotlight_shadow);
         if (vertexShader == null)
-            vertexShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.vertex_shadow);
+            vertexShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.vtx_phong_spotlight_shadow);
         mVertexShaderSource = vertexShader;
         mFragmentShaderSource = fragmentShader;
     }
@@ -87,13 +89,13 @@ public class GVRSpotLight extends GVRPointLight
         super(gvrContext, uniformDesc, vertexDesc);
         setLightClass(getClass().getSimpleName());
         mChanged.set(true);
-        setFloat("shadow_map_index", -1.0f);
+        setInt("shadow_map_index", -1);
         setInnerConeAngle(90.0f);
         setOuterConeAngle(90.0f);
    }
 
     /**
-     * Get the inner angle of the spotlight cone in degrees.
+     * Get the inner angle of the phong_spotlight cone in degrees.
      * 
      * Inside the inner cone angle the light is at full intensity.
      * @see #setInnerConeAngle(float)
@@ -105,7 +107,7 @@ public class GVRSpotLight extends GVRPointLight
     }
 
     /**
-     * Set the inner angle of the spotlight cone in degrees.
+     * Set the inner angle of the phong_spotlight cone in degrees.
      * 
      * Inside the inner cone angle the light is at full intensity.
      * The underlying uniform "inner_cone_angle" is the cosine
@@ -120,7 +122,7 @@ public class GVRSpotLight extends GVRPointLight
     }
     
     /**
-     * Get the outer angle of the spotlight cone in degrees.
+     * Get the outer angle of the phong_spotlight cone in degrees.
      * 
      * Beyond the outer cone angle there is no illumination.
      * @see #setInnerConeAngle(float)
@@ -132,7 +134,7 @@ public class GVRSpotLight extends GVRPointLight
     }
     
     /**
-     * Set the inner angle of the spotlight cone in degrees.
+     * Set the inner angle of the phong_spotlight cone in degrees.
      * 
      * Beyond the outer cone angle there is no illumination.
      * The underlying uniform "outer_cone_angle" is the cosine
@@ -233,7 +235,7 @@ public class GVRSpotLight extends GVRPointLight
      */
     public void onDrawFrame(float frameTime)
     {
-        if (!isEnabled() || (owner == null) || (getFloat("enabled") <= 0.0f))
+        if (!isEnabled() || (owner == null))
         {
             return;
         }

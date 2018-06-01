@@ -245,7 +245,7 @@ public class X3DparseLights
         }
 
         shaderSettings.appendFragmentShaderLights(" if (" + on
-            + ") fragmentcolor += pointlight(v_position, pixelcolor, pixelnormal"
+            + ") fragmentcolor += phong_pointlight(v_position, pixelcolor, pixelnormal"
             + ", vec3(" + location[0] + ", " + location[1] + ", " + location[2]
             + ")" + ", vec3(" + attenuation[0] + ", " + attenuation[1] + ", "
             + attenuation[2] + ")" + ", " + radius[0] + ", " + intensity[0]
@@ -431,7 +431,7 @@ public class X3DparseLights
         }
 
         shaderSettings.appendFragmentShaderLights(" if (" + on
-            + ") fragmentcolor += spotlight(v_position, pixelcolor, pixelnormal"
+            + ") fragmentcolor += phong_spotlight(v_position, pixelcolor, pixelnormal"
             + ", vec3(" + location[0] + ", " + location[1] + ", " + location[2]
             + ")" + ", vec3(" + direction[0] + ", " + direction[1] + ", "
             + direction[2] + ")" + ", vec3(" + attenuation[0] + ", "

@@ -41,6 +41,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
+    private static String surfaceDef = null;
 
     public GVRPhongLayeredShader(GVRContext gvrcontext)
     {
@@ -49,7 +50,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
                 "int emissiveTexture1_blendop; int lightmapTexture1_blendop; " +
                 "float specular_exponent; float line_width",
 
-                "sampler2D diffuseTexture; sampler2D ambientTexture; sampler2D specularTexture; sampler2D opacityTexture; sampler2D lightmapTexture; sampler2D normalTexture; sampler2D emissiveTexture; " +
+                "sampler2D diffuseTexture; sampler2D ambientTexture; sampler2D specularTexture; sampler2D emissiveTexture; sampler2D lightmapTexture; sampler2D opacityTexture; sampler2D normalTexture; " +
                 "sampler2D diffuseTexture1; sampler2D ambientTexture1; sampler2D specularTexture1; sampler2D lightmapTexture1; sampler2D emissiveTexture1",
 
                 "float3 a_position float2 a_texcoord float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float3 a_normal float4 a_bone_weights int4 a_bone_indices float3 a_tangent float3 a_bitangent",
@@ -58,21 +59,24 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
         if (fragTemplate == null)
         {
             Context context = gvrcontext.getContext();
-            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template_multitex);
+            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
             vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
             surfaceShader = TextFile.readTextFile(context, R.raw.phong_surface_layertex);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
             skinShader = TextFile.readTextFile(context, R.raw.vertexskinning);
+            surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
             addLight = TextFile.readTextFile(context, R.raw.addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
         setSegment("FragmentAddLight", addLight);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexSkinShader", skinShader);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexNormalShader", normalShader);
+        setSegment("VertexAddLight", addLight);
 
         mHasVariants = true;
         mUsesLights = true;
@@ -95,7 +99,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
+        return usesLights ? "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
 

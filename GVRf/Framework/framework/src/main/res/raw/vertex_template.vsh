@@ -11,6 +11,8 @@ precision lowp int;
 
 @MATRIX_UNIFORMS
 
+@MATERIAL_UNIFORMS
+
 layout(location = 0) in vec3 a_position;
 
 #ifdef HAS_a_texcoord
@@ -32,19 +34,23 @@ layout(location = 7) in ivec4 a_bone_indices;
 #endif
 
 #ifdef HAS_VertexNormalShader
+#ifdef HAS_a_tangent
 layout(location = 8) in vec3 a_tangent;
 layout(location = 9) in vec3 a_bitangent;
+layout(location = 20) out mat3 tangent_matrix;
+#endif
 #endif
 
-layout(location = 1) out vec3 view_direction;
-layout(location = 2) out vec3 viewspace_position;
-layout(location = 3) out vec3 viewspace_normal;
 
-layout(location = 4) out vec2 diffuse_coord;
-layout(location = 5) out vec2 ambient_coord;
-layout(location = 6) out vec2 specular_coord;
-layout(location = 7) out vec2 emissive_coord;
-layout(location = 8) out vec2 lightmap_coord;
+layout(location = 1) out vec3 viewspace_normal;
+
+layout(location = 2) out vec2 diffuse_coord;
+layout(location = 3) out vec2 ambient_coord;
+layout(location = 4) out vec2 specular_coord;
+layout(location = 5) out vec2 emissive_coord;
+layout(location = 6) out vec2 lightmap_coord;
+layout(location = 7) out vec2 opacity_coord;
+layout(location = 8) out vec2 normal_coord;
 
 struct Vertex
 {
@@ -55,41 +61,53 @@ struct Vertex
 	vec3 view_direction;
 };
 
+
 #ifdef HAS_LIGHTSOURCES
-	@LIGHTSOURCES
+
+layout(location = 9) out vec3 view_direction;
+layout(location = 10) out vec3 viewspace_position;
+layout(location = 11) out vec3 vertex_light_diffuse;
+layout(location = 12) out vec3 vertex_light_specular;
+layout(location = 13) out vec3 vertex_light_ambient;
+
+@VertexSurface
+
+@VertexAddLight
+
+@LIGHTSOURCES
+
 #endif
 	
-void main() {
-	Vertex vertex;
+void main()
+{
+    Vertex vertex;
 
-	vertex.local_position = vec4(a_position.xyz, 1.0);
-	vertex.local_normal = vec4(0.0, 0.0, 1.0, 0.0);
-	@VertexShader
+    vertex.local_position = vec4(a_position.xyz, 1.0);
+    vertex.local_normal = vec4(0.0, 0.0, 1.0, 0.0);
+
+@VertexShader
+
 #ifdef HAS_VertexSkinShader
-	@VertexSkinShader
+@VertexSkinShader
 #endif
-#ifdef HAS_VertexNormalShader
-	@VertexNormalShader
-#endif
-#ifdef HAS_LIGHTSOURCES
-	LightVertex(vertex);
-#endif
-#ifdef HAS_TEXCOORDS
-	@TEXCOORDS
-#endif
-    mat4 mvp = u_mvp;
-	viewspace_position = vertex.viewspace_position;
-	viewspace_normal = vertex.viewspace_normal;
-	view_direction = vertex.view_direction;
 
-#ifdef HAS_MULTIVIEW
-    bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(gl_ViewID_OVR));
-    mvp = mvp * float(render_mask);
-#else
-	//generate right eye mvp from left
-    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(u_right));
+#ifdef HAS_VertexNormalShader
+@VertexNormalShader
 #endif
-    gl_Position = mvp * vertex.local_position;
+
+#ifdef HAS_TEXCOORDS
+@TEXCOORDS
+#endif
+
+    viewspace_normal = vertex.viewspace_normal;
+#ifdef HAS_LIGHTSOURCES
+    viewspace_position = vertex.viewspace_position;
+    view_direction = vertex.view_direction;
+    vertex_light_diffuse = vec3(0);
+    vertex_light_specular = vec3(0);
+    vertex_light_ambient = vec3(0);
+    LightVertex(vertex, makeSurface(vertex.viewspace_normal));
+#endif
+    gl_Position = u_mvp * vertex.local_position;
 
 }

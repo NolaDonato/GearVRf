@@ -23,5 +23,5 @@ void main()
     mvp[3][0] = mvp[3][0] - (u_proj_offset * float(u_right));
 
     diffuse_coord = a_texcoord;
- 	gl_Position = mvp * vec4(a_position,1.0);
+ 	gl_Position = u_mvp * vec4(a_position, 1.0);
 }

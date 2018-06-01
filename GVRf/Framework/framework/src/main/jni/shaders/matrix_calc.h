@@ -33,9 +33,8 @@ namespace gvr
             Unary = 5,
             Invert = 5,
             Transpose = 6,
-            Group = 7,
-            InputOperand = 8,
-            OutputOperand = 9
+            InputOperand = 7,
+            OutputOperand = 8
         };
 
         struct ExprNode
@@ -72,8 +71,6 @@ namespace gvr
         int getNumOutputs () const
         { return mExprTrees.size(); }
 
-        std::string asString(ExprNode* node, int level = 0);
-
     protected:
         int compile (ExprNode** root, const char* expression);
 
@@ -81,7 +78,7 @@ namespace gvr
 
         bool eval (ExprNode* root, glm::mat4& result);
 
-        static const char* mInputMatrixNames[20];
+        static const char*mInputMatrixNames[20];
         std::vector<ExprNode*> mExprTrees;
         const glm::mat4* mInputMatrices;
         glm::mat4* mOutputMatrices;

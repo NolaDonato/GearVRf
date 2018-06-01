@@ -46,6 +46,7 @@ namespace gvr {
 
 /*
  * Adds a new light to the scene.
+ * The lights within a class are sorted with respect to quality.
  * Return true if light was added, false if already there or too many lights.
  */
     bool LightList::addLight(Light* light)
@@ -56,8 +57,31 @@ namespace gvr {
         if (it2 != mClassMap.end())
         {
             std::vector<Light*>& lights = it2->second;
-            light->setLightIndex(lights.size());
-            lights.push_back(light);
+            for (auto it3 = lights.begin(); it3 != lights.end(); ++it3)
+            {
+                int q1, q2;
+
+                if (light)
+                {
+                    light->getInt("quality", q1);
+                    (*it3)->getInt("quality", q2);
+                    if (q1 < q2)
+                    {
+                        lights.insert(it3, light);
+                        light->setLightIndex(it3 - lights.begin());
+                        light = nullptr;
+                    }
+                }
+                else
+                {
+                    (*it3)->setLightIndex(it3 - lights.begin());
+                }
+            }
+            if (light)
+            {
+                light->setLightIndex(lights.size());
+                lights.push_back(light);
+            }
         }
         else
         {
@@ -364,7 +388,7 @@ namespace gvr {
         for (auto it = mClassMap.begin(); it != mClassMap.end(); ++it)
         {
             const std::vector<Light*>& lights = it->second;
-            stream << prefix << 'U' << it->first << " " << it->first << "s[" << lights.size() << "];" << std::endl;
+            stream << prefix << 'U' << it->first << " " << it->first << "[" << lights.size() << "];" << std::endl;
         }
         if (mUseUniformBlock)
         {

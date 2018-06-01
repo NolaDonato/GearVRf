@@ -43,6 +43,7 @@ public class GVRTextureShader extends GVRShaderTemplate
     private static String surfaceShader = null;
     private static String addLight = null;
     private static String vtxShader = null;
+    private static String surfaceDef = null;
 
     public GVRTextureShader(GVRContext gvrcontext)
     {
@@ -55,15 +56,18 @@ public class GVRTextureShader extends GVRShaderTemplate
             vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.texture_surface);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_tex);
+            surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
             addLight = TextFile.readTextFile(context, R.raw.addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
         setSegment("FragmentAddLight", addLight);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexNormalShader", "");
         setSegment("VertexSkinShader", "");
+        setSegment("VertexAddLight", addLight);
         setOutputMatrixCount(3);
         mHasVariants = true;
         mUsesLights = true;
@@ -95,7 +99,7 @@ public class GVRTextureShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
+        return usesLights ? "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
 }

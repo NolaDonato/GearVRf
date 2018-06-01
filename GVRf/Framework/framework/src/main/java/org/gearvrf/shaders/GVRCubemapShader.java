@@ -88,7 +88,7 @@ public class GVRCubemapShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return "left_mvp; right_mvp; model";
+        return "left_mvp; model";
     }
 
 }

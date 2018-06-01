@@ -375,13 +375,13 @@ public final class AiLight {
     
     
     /**
-     * Inner cone of spotlight.
+     * Inner cone of phong_spotlight.
      */
     private final float m_innerCone;
     
     
     /**
-     * Outer cone of spotlight.
+     * Outer cone of phong_spotlight.
      */
     private final float m_outerCone;
 }
