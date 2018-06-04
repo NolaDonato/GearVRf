@@ -805,14 +805,13 @@ class   GVRJassimpAdapter {
         }
         if (texIndex > 1)
         {
-            assetRequest.onTextureError(mContext, "Layering only supported for two textures, ignoring " + mFileName, mFileName);
+            assetRequest.onModelError(mContext, "Layering only supported for two textures, ignoring " + texFileName, mFileName);
             return;
         }
         if (texIndex > 0)
         {
             if (usingPBR)
             {
-                assetRequest.onTextureError(mContext, textureKey + " duplicate ignored for PBR renderer" + mFileName, mFileName);
                 return;
             }
             textureKey += texIndex;
@@ -830,7 +829,7 @@ class   GVRJassimpAdapter {
 
         gvrTex.setTexCoord(texCoordKey, shaderKey);
         gvrmtl.setTexture(textureKey, gvrTex);
-        if (typeName.equals("lightmap"))
+        if (!usingPBR && typeName.equals("lightmap"))
         {
             gvrmtl.setVec2("u_lightmap_scale", 1, 1);
             gvrmtl.setVec2("u_lightmap_offset", 0, 0);

@@ -27,6 +27,10 @@ layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
 #ifdef HAS_normalTexture
 layout(location = 9) in vec2 normal_coord;
 layout(set = 0, binding = 15) uniform sampler2D normalTexture;
+
+#ifdef HAS_tangent
+layout(location = 16) in mat3 tangent_matrix;
+#endif
 #endif
 
 #ifdef HAS_diffuseTexture1

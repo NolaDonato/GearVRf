@@ -90,5 +90,7 @@ public class GVRPBRShader extends GVRShaderTemplate
         material.setFloat("normalScale", 1);
         material.setFloat("lightmapStrength", 1);
     }
+
+
 }
 
