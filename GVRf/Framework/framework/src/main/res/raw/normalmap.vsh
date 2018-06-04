@@ -1,3 +1,4 @@
+
 #if defined(HAS_normalTexture) && defined(HAS_a_normal)
 #ifdef HAS_MULTIVIEW
    mat3 normalMatrix = mat3(u_mv_it_[gl_ViewID_OVR]);
