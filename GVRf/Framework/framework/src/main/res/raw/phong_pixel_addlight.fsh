@@ -8,18 +8,20 @@ struct Radiance
    float attenuation;
 };
 
-Reflected LightReflected(Radiance r, vec3 viewspaceNormal, vec3 viewDirection)
+
+
+Reflected LightPerPixel(Radiance r, Surface s)
 {
 	vec3 L = r.direction;	// From surface to light, unit length, view-space
-	float nDotL = max(dot(viewspaceNormal, L), 0.0);
-	
+	float nDotL = max(dot(s.viewspaceNormal, L), 0.0);
+
 	vec3 kA = clamp(r.ambient_intensity.xyz, 0.0, 1.0);
 	vec3 kS = vec3(0, 0, 0);
 	vec3 kD = r.attenuation * nDotL * clamp(r.diffuse_intensity.xyz, 0.0, 1.0);
 	if (nDotL > 0.0)
 	{
-		vec3 reflect = normalize(reflect(-L, viewspaceNormal));
-		float cosAngle = dot(viewDirection, reflect);
+		vec3 reflect = normalize(reflect(-L, s.viewspaceNormal));
+		float cosAngle = dot(view_direction, reflect);
 		if (cosAngle > 0.0)
 		{
 			kS = r.attenuation * clamp(r.specular_intensity, 0.0, 1.0);
@@ -28,4 +30,3 @@ Reflected LightReflected(Radiance r, vec3 viewspaceNormal, vec3 viewDirection)
 	}
 	return Reflected(kA, kD, kS);
 }
-

@@ -14,10 +14,7 @@
  */
 package org.gearvrf.shaders;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.HashMap;
-import java.util.List;
 
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRRenderData;
@@ -30,7 +27,6 @@ import org.gearvrf.utility.TextFile;
 import android.content.Context;
 
 import org.gearvrf.R;
-import org.joml.Matrix4f;
 
 /**
  * Manages a set of variants on vertex and fragment shaders from the same source
@@ -41,7 +37,8 @@ public class GVRTextureShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String surfaceDef = null;
 
@@ -57,17 +54,18 @@ public class GVRTextureShader extends GVRShaderTemplate
             surfaceShader = TextFile.readTextFile(context, R.raw.texture_surface);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_tex);
             surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
-            addLight = TextFile.readTextFile(context, R.raw.addlight);
+            addPixelLight = TextFile.readTextFile(context, R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
         setSegment("FragmentSurface", surfaceDef + surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexSurface", surfaceDef);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexNormalShader", "");
         setSegment("VertexSkinShader", "");
-        setSegment("VertexAddLight", addLight);
+        setSegment("VertexAddLight", addVertexLight);
         setOutputMatrixCount(3);
         mHasVariants = true;
         mUsesLights = true;

@@ -42,7 +42,7 @@ void Fragment@LightType(Surface s)
         if ((light.quality > 1) && (length(viewspace_position) <= light.radius))
         {
             Radiance r = Radiance@LightType(light, i);
-            Reflected ref = LightReflected(r, viewspace_normal, view_direction);
+            Reflected ref = LightPerPixel(r, s);
             total_light.ambient_color += ref.ambient_color;
             total_light.diffuse_color += ref.diffuse_color;
             total_light.specular_color += ref.specular_color;

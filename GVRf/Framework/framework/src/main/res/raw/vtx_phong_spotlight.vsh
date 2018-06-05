@@ -36,7 +36,7 @@ void Vertex@LightType(Vertex vertex)
         if (length(vertex.viewspace_position) <= light.radius)
         {
             Radiance r = Radiance@LightType(vertex, light, i);
-            Reflected ref = LightReflected(r, vertex.viewspace_normal, vertex.view_direction);
+            Reflected ref = LightPerVertex(r, vertex);
             vertex_light_ambient += ref.ambient_color;
             vertex_light_diffuse += ref.diffuse_color;
             vertex_light_specular += ref.specular_color;

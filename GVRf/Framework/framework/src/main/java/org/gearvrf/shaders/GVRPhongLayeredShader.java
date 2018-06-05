@@ -24,7 +24,6 @@ import org.gearvrf.GVRShaderTemplate;
 import org.gearvrf.IRenderable;
 import org.gearvrf.R;
 import org.gearvrf.utility.TextFile;
-import org.joml.Matrix4f;
 
 import java.util.HashMap;
 
@@ -37,7 +36,8 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
@@ -66,17 +66,18 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
             skinShader = TextFile.readTextFile(context, R.raw.vertexskinning);
             surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
-            addLight = TextFile.readTextFile(context, R.raw.addlight);
+            addPixelLight = TextFile.readTextFile(context, R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
         setSegment("FragmentSurface", surfaceDef + surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexSurface", surfaceDef);
         setSegment("VertexSkinShader", skinShader);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexNormalShader", normalShader);
-        setSegment("VertexAddLight", addLight);
+        setSegment("VertexAddLight", addVertexLight);
 
         mHasVariants = true;
         mUsesLights = true;

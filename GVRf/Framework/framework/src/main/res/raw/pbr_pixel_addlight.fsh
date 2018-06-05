@@ -1,4 +1,11 @@
-
+struct Radiance
+{
+   vec3 ambient_intensity;
+   vec3 diffuse_intensity;
+   vec3 specular_intensity;
+   vec3 direction;
+   float attenuation;
+};
 
 //
 // Schlick Implementation of microfacet occlusion from
@@ -49,7 +56,7 @@ float microfacetDistribution(float NdotH, float alphaRoughness)
     return roughnessSq / (M_PI * f * f);
 }
 
-vec4 AddLight(Surface s, Radiance r)
+Reflected LightPerPixel(Radiance r, Surface s)
 {
 	vec3 l = r.direction.xyz;                  // From surface to light, unit length, view-space
     vec3 n = s.viewspaceNormal;                // normal at surface point
@@ -81,32 +88,7 @@ vec4 AddLight(Surface s, Radiance r)
     // calculate diffuse and specular contribution
     // From Schlick BRDF model from "An Inexpensive BRDF Model for Physically-based Rendering"
     //
-    vec3 kD = (1.0 - F) * s.diffuse.xyz / M_PI;
+    vec3 kD = (vec3(1.0) - F) / M_PI;
     vec3 kS = F * G * D / (4.0 * NdotL * NdotV);
-
-    // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-    vec3 color = NdotL * ((r.diffuse_intensity * kD) + (r.specular_intensity * kS)) + s.emission.xyz;
-
-#ifdef HAS_lightmapTexture
-    float ao = texture(lightmapTexture, lightmap_coord).r;
-    color = mix(color, color * ao, lightmapStrength);
-#endif
-
-    // This section uses mix to override final color for reference app visualization
-    // of various parameters in the lighting equation. Might need this if we have an app for demo.
-
-//#ifdef HAS_scaleFGD
-//    color = mix(color, F, scaleFGD.x);
-//    color = mix(color, vec3(G), scaleFGD.y);
-//    color = mix(color, vec3(D), scaleFGD.z);
-//    color = mix(color, kS, scaleFGD.w);
-//#endif
-//#ifdef HAS_scaleDiffBaseMR
-//    color = mix(color, kD, scaleDiffBaseMR.x);
-//    color = mix(color, s.diffuse.rgb, scaleDiffBaseMR.y);
-//    color = mix(color, vec3(s.metallic), scaleDiffBaseMR.z);
-//    color = mix(color, vec3(s.roughness), scaleDiffBaseMR.w);
-//#endif
-
-    return vec4(pow(color, vec3(1.0 / 2.2)), s.diffuse.w);
+    return Reflected(vec3(0), r.diffuse_intensity * kD, r.specular_intensity * kS);
 }

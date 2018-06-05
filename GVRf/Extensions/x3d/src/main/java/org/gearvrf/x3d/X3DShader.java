@@ -3,7 +3,6 @@ package org.gearvrf.x3d;
 import android.content.Context;
 
 import org.gearvrf.GVRContext;
-import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRShaderData;
 import org.gearvrf.GVRShaderTemplate;
@@ -38,7 +37,7 @@ public class X3DShader extends GVRShaderTemplate
             surfaceShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_surface);
             vtxShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_vertex);
             surfaceDef = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_surface_def);
-            addLight = TextFile.readTextFile(context, org.gearvrf.R.raw.addlight);
+            addLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);

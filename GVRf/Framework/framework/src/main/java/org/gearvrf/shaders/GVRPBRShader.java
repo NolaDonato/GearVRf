@@ -36,10 +36,12 @@ public class GVRPBRShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
+    private static String surfaceDef = null;
 
     public GVRPBRShader(GVRContext gvrcontext)
     {
@@ -57,16 +59,20 @@ public class GVRPBRShader extends GVRShaderTemplate
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
             skinShader = TextFile.readTextFile(context, R.raw.vertexskinning);
-            addLight = TextFile.readTextFile(context, R.raw.pbr_addlight);
+            addPixelLight = TextFile.readTextFile(context, R.raw.pbr_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.pbr_vertex_addlight);
+            surfaceDef = TextFile.readTextFile(context, R.raw.pbr_surface_def);
         }
         String defines = "#define ambient_coord metallicRoughness_coord\n";
         setSegment("FragmentTemplate", defines + fragTemplate);
         setSegment("VertexTemplate", defines + vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexSkinShader", skinShader);
         setSegment("VertexShader", vtxShader);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexNormalShader", normalShader);
+        setSegment("VertexAddLight", addVertexLight);
 
         mHasVariants = true;
         mUsesLights = true;

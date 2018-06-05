@@ -52,6 +52,7 @@ Surface @ShaderName()
 	vec4 emission = emissive_color;
 	vec4 specular = specular_color;
 	vec4 ambient = ambient_color;
+	vec3 viewspaceNormal;
 
 #ifdef HAS_diffuseTexture
 	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
@@ -83,7 +84,9 @@ diffuse.xyz *= diffuse.a;
 #endif
 
 #ifdef HAS_normalTexture
-	viewspaceNormal = texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0;
+    mat3 tbn = calculateTangentMatrix();
+	viewspaceNormal = normalize(texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0);
+	viewspaceNormal = normalize(tbn * viewspaceNormal);
 #else
 	viewspaceNormal = viewspace_normal;
 #endif

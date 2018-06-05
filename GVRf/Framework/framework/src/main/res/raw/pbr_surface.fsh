@@ -1,6 +1,3 @@
-@MATERIAL_UNIFORMS
-const float M_PI = 3.141592653589793;
-const float c_MinRoughness = 0.04;
 
 layout (set = 0, binding = 10 ) uniform sampler2D diffuseTexture;
 
@@ -34,16 +31,6 @@ layout(location = 11) in vec2 diffuse_coord1;
 layout(set = 0, binding = 11) uniform sampler2D diffuseTexture1;
 #endif
 
-struct Surface
-{
-    vec4 diffuse;               // color contribution from diffuse lighting
-    vec3 specular;              // color contribution from specular lighting
-    vec3 emission;              // emitted light color
-    vec3 viewspaceNormal;       // normal in view space
-    vec2 brdf;                  // reflectance at 0 and 90
-    float roughness;            // roughness value, as authored by the model creator (input to shader)
-};
-
 vec3 SRGBtoLINEAR(vec3 srgbIn)
 {
     //fast srgb approximation
@@ -52,7 +39,6 @@ vec3 SRGBtoLINEAR(vec3 srgbIn)
 
 Surface @ShaderName()
 {
-
     float perceptualRoughness;
     vec3 diffuse;
     vec3 specular;
@@ -119,7 +105,35 @@ Surface @ShaderName()
         viewspaceNormal = viewspace_normal;
     #endif
 
-    return Surface(vec4(diffuse, diffuse_color.a), specular, emission,
-                   viewspaceNormal, brdf,
-                   perceptualRoughness);
+    return Surface(viewspaceNormal, vec4(diffuse, diffuse_color.a),
+                   specular, emission,
+                   brdf, perceptualRoughness);
 }
+
+#ifdef HAS_LIGHTSOURCES
+
+void LightPixel(Surface);
+
+Reflected total_light;
+
+vec4 PixelColor(Surface s)
+{
+    total_light.diffuse_color = vertex_light_diffuse;
+    total_light.specular_color = vertex_light_specular;
+
+    LightPixel(s);  // Surface s not used in LightPixel
+    vec3 c = s.diffuse.xyz * total_light.diffuse_color +
+             total_light.specular_color + s.emission.xyz;
+#ifdef HAS_lightmapTexture
+    float ao = texture(lightmapTexture, lightmap_coord).r;
+    c = mix(c, c * ao, lightmapStrength);
+#endif
+    return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.w);
+}
+
+#else
+vec4 PixelColor(Surface s)
+{
+    return s.diffuse;
+}
+#endif
