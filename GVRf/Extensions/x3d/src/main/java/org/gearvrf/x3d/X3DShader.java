@@ -17,7 +17,8 @@ public class X3DShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String surfaceDef = null;
 
@@ -37,17 +38,18 @@ public class X3DShader extends GVRShaderTemplate
             surfaceShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_surface);
             vtxShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_vertex);
             surfaceDef = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_surface_def);
-            addLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_vertex_addlight);
+            addPixelLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
         setSegment("FragmentSurface", surfaceDef + surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexSurface", surfaceDef);
         setSegment("VertexSkinShader", "");
         setSegment("VertexNormalShader", "");
-        setSegment("VertexAddLight", addLight);
+        setSegment("VertexAddLight", addVertexLight);
         mHasVariants = true;
         mUsesLights = true;
     }
