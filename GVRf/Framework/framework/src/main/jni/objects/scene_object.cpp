@@ -310,9 +310,13 @@ void SceneObject::getDescendants(std::vector<SceneObject*>& descendants) {
 }
 
 void SceneObject::dirtyHierarchicalBoundingVolume() {
+    if (bounding_volume_dirty_) {
+        return;
+    }
+
     bounding_volume_dirty_ = true;
-    if ((parent_ != NULL) && !parent_->bounding_volume_dirty_)
-    {
+
+    if (parent_ != NULL) {
         parent_->dirtyHierarchicalBoundingVolume();
     }
 }

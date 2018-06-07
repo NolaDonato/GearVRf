@@ -25,7 +25,7 @@ layout(location = 9) in vec2 opacity_coord;
 layout(location = 10) in vec2 normal_coord;
 
 #ifdef HAS_tangent
-layout(location = 3) in mat3 tangent_matrix;
+layout(location = 16) in mat3 tangent_matrix;
 #endif
 #endif
 
