@@ -2,33 +2,33 @@
 const float M_PI = 3.141592653589793;
 const float c_MinRoughness = 0.04;
 
-layout (set = 0, binding = 10 ) uniform sampler2D diffuseTexture;
+layout (set = 0, binding = 4 ) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_metallicRoughnessTexture
 layout(location = 5) in vec2 metallicRoughness_coord;
-layout(set = 0, binding = 11) uniform sampler2D metallicRoughnessTexture;
+layout(set = 0, binding = 5) uniform sampler2D metallicRoughnessTexture;
 #endif
 
 #ifdef HAS_specularTexture
 layout(location = 6) in vec2 specular_coord;
-layout(set = 0, binding = 12) uniform sampler2D specularTexture;
+layout(set = 0, binding = 6) uniform sampler2D specularTexture;
 #endif
 
 #ifdef HAS_emissiveTexture
 layout(location = 7) in vec2 emissive_coord;
-layout (set = 0, binding = 16) uniform sampler2D emissiveTexture;
+layout (set = 0, binding = 7) uniform sampler2D emissiveTexture;
 #endif
 
 #ifdef HAS_lightmapTexture
 layout(location = 8) in vec2 lightmap_coord;
-layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
+layout(set = 0, binding = 8) uniform sampler2D lightmapTexture;
 #endif
 
 #ifdef HAS_normalTexture
-layout(location = 9) in vec2 normal_coord;
-layout(set = 0, binding = 15) uniform sampler2D normalTexture;
+layout(location = 10) in vec2 normal_coord;
+layout(set = 0, binding = 10) uniform sampler2D normalTexture;
 
-#ifdef HAS_tangent
+#ifdef HAS_a_tangent
 layout(location = 16) in mat3 tangent_matrix;
 #endif
 #endif

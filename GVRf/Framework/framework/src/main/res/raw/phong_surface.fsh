@@ -32,7 +32,7 @@ layout(location = 9) in vec2 opacity_coord;
 #ifdef HAS_normalTexture
 layout(location = 10) in vec2 normal_coord;
 
-#ifdef HAS_tangent
+#ifdef HAS_a_tangent
 layout(location = 16) in mat3 tangent_matrix;
 #endif
 #endif
