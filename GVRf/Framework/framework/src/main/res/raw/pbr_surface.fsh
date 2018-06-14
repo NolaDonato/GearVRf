@@ -21,16 +21,16 @@ layout(location = 14) in vec2 lightmap_coord;
 layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
 #endif
 
+#ifdef HAS_brdfLUTTexture
+layout(set = 0, binding = 15) uniform sampler2D brdfLUTTexture;
+#endif
+
 #ifdef HAS_normalTexture
 layout(location = 16) in vec2 normal_coord;
 layout(set = 0, binding = 16) uniform sampler2D normalTexture;
 #ifdef HAS_a_tangent
-layout(location = 4) in mat3 tangent_matrix;
+layout(location = 7) in mat3 tangent_matrix;
 #endif
-#endif
-
-#ifdef HAS_brdfLUTTexture
-layout(set = 0, binding = 15) uniform sampler2D brdfLUTTexture;
 #endif
 
 #ifdef HAS_diffuseEnvTex
@@ -91,7 +91,7 @@ Surface @ShaderName()
 #endif
      perceptualRoughness = 1.0f - glossiness;
 
-#else
+#else // HAS_glossinessFactor
     //metallic roughness workflow
     vec4 basecolor = diffuse_color;
     float metal = metallic;
@@ -155,13 +155,12 @@ vec4 PixelColor(Surface s)
     LightPixel(s);
     vec3 c = s.diffuse.xyz * total_light.diffuse_color +
              total_light.specular_color + s.emission.xyz;
-
 #ifdef HAS_lightmapTexture
     float ao = texture(lightmapTexture, lightmap_coord).r;
     c = mix(c, c * ao, lightmapStrength);
 #endif
-
-    return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.w);
+return s.diffuse
+    //return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.a);
 }
 
 #else

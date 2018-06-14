@@ -76,7 +76,7 @@ Reflected LightPerPixel(Radiance r, Surface s)
     // "An Inexpensive BRDF Model for Physically based Rendering" by Christophe Schlick.
     //
     vec3 specularEnvironmentR0 = s.specular.rgb;
-    vec3 specularEnvironmentR90 = vec3(1.0, 1.0, 1.0) * s.brdf.y;
+    vec3 specularEnvironmentR90 = vec3(1.0) * s.brdf.y;
     vec3 F = specularEnvironmentR0 + (specularEnvironmentR90 - specularEnvironmentR0) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
 
     float G = geometricOcclusionSchlick(NdotL, NdotV, s.roughness); // Schlick implementation
@@ -88,8 +88,8 @@ Reflected LightPerPixel(Radiance r, Surface s)
     // calculate diffuse and specular contribution
     // From Schlick BRDF model from "An Inexpensive BRDF Model for Physically-based Rendering"
     //
-    vec3 kD = (vec3(1.0) - F) / M_PI;
-    vec3 kS = F * G * D / (4.0 * NdotL * NdotV);
+    vec3 kD = r.diffuse_intensity * (vec3(1.0) - F) / M_PI;
+    vec3 kS = r.specular_intensity * F * G * D / (4.0 * NdotL * NdotV);
 
 #ifdef HAS_diffuseEnvTexture
     vec3 worldNml = (u_view_i * vec4(n, 1.0)).xyz;
@@ -104,5 +104,5 @@ Reflected LightPerPixel(Radiance r, Surface s)
 
      kS += specEnv * (brdf.x * s.specular.rgb + brdf.y);
 #endif
-    return Reflected(vec3(0), r.diffuse_intensity * kD, r.specular_intensity * kS);
+    return Reflected(vec3(0), kD, kS);
 }
