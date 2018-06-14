@@ -1,5 +1,20 @@
 
-layout(set = 0, binding = 2) uniform sampler2D diffuseTexture;
+
+layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
+
+#ifdef HAS_diffuseTexture1
+layout(location = 17) in vec2 diffuse_coord1;
+layout(set = 0, binding = 17) uniform sampler2D diffuseTexture1;
+#endif
+
+struct Surface
+{
+   vec3 viewspaceNormal;
+   vec4 ambient;
+   vec4 diffuse;
+   vec4 specular;
+   vec4 emission;
+};
 
 #define BLEND_MULTIPLY 0
 #define BLEND_ADD 1
@@ -54,6 +69,13 @@ Surface @ShaderName()
 	vec4 ambient = ambient_color;
 	vec3 viewspaceNormal;
 
+#ifndef HAS_LIGHTSOURCES
+    diffuse = emission;
+#endif
+#ifdef HAS_ambientTexture
+	ambient *= texture(ambientTexture, ambient_coord.xy);
+#endif
+
 #ifdef HAS_diffuseTexture
 	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
 #endif
@@ -70,17 +92,9 @@ diffuse.xyz *= diffuse.a;
 #ifdef HAS_specularTexture
 	specular *= texture(specularTexture, specular_coord.xy);
 #endif
-#ifdef HAS_specularTexture1_blendop
-    temp = texture(specularTexture1, specular_coord1.xy);
-	specular = BlendColors(specular, temp, specularTexture1_blendop);
-#endif
 
 #ifdef HAS_emissiveTexture
 	emission = texture(emissiveTexture, emissive_coord.xy);
-#endif
-#ifdef HAS_emissiveTexture1_blendop
-    temp = texture(emissiveTexture1, emissive_coord1.xy);
-    emission = BlendColors(emission, temp, emissiveTexture1_blendop);
 #endif
 
 #ifdef HAS_normalTexture
@@ -90,18 +104,7 @@ diffuse.xyz *= diffuse.a;
 #else
 	viewspaceNormal = viewspace_normal;
 #endif
-
-#ifdef HAS_lightMapTexture
-	vec2 lcoord = (lightmap_coord * u_lightMap_scale) + u_lightMap_offset;
-	diffuse *= texture(lightMapTexture, vec2(lcoord.x, 1 - lcoord.y));
-	#ifdef HAS_lightMapTexture1
-		lcoord = (lightmap_coord1 * u_lightMap_scale) + u_lightMap_offset;
-    	diffuse = BlendColors(diffuse, texture(lightMapTexture1, vec2(lcoord.x, 1 - lcoord.y), lightMapTexture1_blendop);
-    #endif
-	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, emission);
-#else
 	return Surface(viewspaceNormal, ambient, diffuse, specular, emission);
-#endif
 }
 
 #ifdef HAS_LIGHTSOURCES

@@ -1,39 +1,40 @@
+@MATERIAL_UNIFORMS
 
+layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_ambientTexture
-layout(location = 3) in vec2 ambient_coord;
+layout(location = 11) in vec2 ambient_coord;
+layout(set = 0, binding = 11) uniform sampler2D ambientTexture;
 #endif
 
 #ifdef HAS_specularTexture
-layout(location = 4) in vec2 specular_coord;
+layout(location = 12) in vec2 specular_coord;
+layout(set = 0, binding = 12) uniform sampler2D specularTexture;
 #endif
 
 #ifdef HAS_emissiveTexture
-layout(location = 5) in vec2 emissive_coord;
+layout(location = 13) in vec2 emissive_coord;
+layout(set = 0, binding = 13) uniform sampler2D emissiveTexture;
 #endif
 
-#ifdef HAS_lightMapTexture
-layout(location = 6) in vec2 lightmap_coord;
+#ifdef HAS_lightmapTexture
+layout(location = 14) in vec2 lightmap_coord;
+layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
 #endif
 
 #ifdef HAS_opacityTexture
-layout(location = 7) in vec2 opacity_coord;
+layout(location = 15) in vec2 opacity_coord;
+layout(set = 0, binding = 15) uniform sampler2D opacityTexture;
 #endif
 
 #ifdef HAS_normalTexture
-layout(location = 8) in vec2 normal_coord;
+#ifdef HAS_a_tangent
+layout(location = 7) in mat3 tangent_matrix;
 #endif
 
-layout(set = 0, binding = 2) uniform sampler2D diffuseTexture;
-layout(set = 0, binding = 3) uniform sampler2D ambientTexture;
-layout(set = 0, binding = 4) uniform sampler2D specularTexture;
-layout(set = 0, binding = 5) uniform sampler2D emissiveTexture;
-layout(set = 0, binding = 6) uniform sampler2D lightmapTexture;
-layout(set = 0, binding = 7) uniform sampler2D opacityTexture;
-layout(set = 0, binding = 8) uniform sampler2D normalTexture;
+layout(location = 16) in vec2 normal_coord;
+layout(set = 0, binding = 16) uniform sampler2D normalTexture;
 
-
-#ifdef HAS_normalTexture
 mat3 calculateTangentMatrix()
 {
 #ifdef HAS_a_tangent
@@ -69,9 +70,9 @@ Surface @ShaderName()
 	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
 #endif
 #ifdef HAS_opacityTexture
-	diffuse.w *= texture(opacityTexture, diffuse_coord.xy).a;
+	diffuse.w *= texture(opacityTexture, opacity_coord.xy).a;
 #endif
-diffuse.xyz *= diffuse.w;
+    diffuse.xyz *= diffuse.w;
 #ifdef HAS_specularTexture
 	specular *= texture(specularTexture, specular_coord.xy);
 #endif
@@ -86,9 +87,9 @@ diffuse.xyz *= diffuse.w;
 	viewspaceNormal = viewspace_normal;
 #endif
 #ifdef HAS_lightMapTexture
-	vec2 lmap_coord = (lightmap_coord * u_lightMap_scale) + u_lightMap_offset;
-	diffuse *= texture(lightMapTexture, vec2(lmap_coord.x, 1 - lmap_coord.y);
-	return Surface(viewspaceNormal, ambient, vec4(0), specular, diffuse);
+	vec2 lmap_coord = (lightmap_coord * lightmap_scale) + lightmap_offset;
+	diffuse *= texture(lightmapTexture, vec2(lmap_coord.x, 1 - lmap_coord.y);
+	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, diffuse);
 #else
 	return Surface(viewspaceNormal, ambient, diffuse, specular, emission);
 #endif

@@ -1,5 +1,7 @@
 package org.gearvrf;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 
 import java.io.IOException;
@@ -143,10 +145,21 @@ class   GVRJassimpAdapter {
         {
             vertexDescriptor += " float4 a_bone_weights int4 a_bone_indices";
         }
+        if (doLighting && aiMesh.hasTangentsAndBitangents())
+        {
+            vertexDescriptor += " float3 a_tangent float3 a_bitangent";
+            FloatBuffer tangentBuffer = aiMesh.getTangentBuffer();
+            FloatBuffer bitangentBuffer = aiMesh.getBitangentBuffer();
+            tangentsArray = new float[tangentBuffer.capacity()];
+            tangentBuffer.get(tangentsArray, 0, tangentBuffer.capacity());
+            bitangentsArray = new float[bitangentBuffer.capacity()];
+            bitangentBuffer.get(bitangentsArray, 0, bitangentBuffer.capacity());
+        }
+
         GVRMesh mesh = new GVRMesh(ctx, vertexDescriptor);
 
         // Vertex Colors
-        for(int c = 0; c < MAX_VERTEX_COLORS; c++)
+        for (int c = 0; c < MAX_VERTEX_COLORS; c++)
         {
             FloatBuffer fbuf = aiMesh.getColorBuffer(c);
             if (fbuf != null)
@@ -757,6 +770,12 @@ class   GVRJassimpAdapter {
                     m.setFloat("metallic", metallic);
                     m.setDiffuseColor(baseColorFactor.getRed(), baseColorFactor.getGreen(), baseColorFactor.getBlue(), baseColorFactor.getAlpha());
                 }
+
+                Bitmap bitmap = BitmapFactory.decodeResource(
+                        mContext.getContext().getResources(), R.drawable.brdflookup);
+                GVRTexture brdfLUTtex = new GVRTexture(mContext);
+                brdfLUTtex.setImage(new GVRBitmapImage(mContext, bitmap));
+                m.setTexture("brdfLUTTexture", brdfLUTtex);
                 return m;
             }
             catch (IllegalArgumentException e)
@@ -818,6 +837,11 @@ class   GVRJassimpAdapter {
 
         gvrTex.setTexCoord(texCoordKey, shaderKey);
         gvrmtl.setTexture(textureKey, gvrTex);
+        if (!usingPBR && typeName.equals("lightmap"))
+        {
+            gvrmtl.setVec2("u_lightmap_scale", 1, 1);
+            gvrmtl.setVec2("u_lightmap_offset", 0, 0);
+        }
 
         if (texFileName.startsWith("*"))
         {

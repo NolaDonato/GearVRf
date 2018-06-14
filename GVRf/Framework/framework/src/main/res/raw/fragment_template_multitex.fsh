@@ -12,39 +12,33 @@ precision lowp int;
 @MATERIAL_UNIFORMS
 
 layout(location = 0) out vec4 fragColor;
+
+layout(location = 10) in vec2 diffuse_coord;
 layout(location = 1) in vec3 viewspace_normal;
-layout(location = 2) in vec2 diffuse_coord;
 
-//
-// locations 3 thru 8 are diffuse_coord,
-// ambient_coord, specular_coord, opacity_coord,
-// normal_coord, lightmap_coord and emissive_coord
-//
 
 #ifdef HAS_LIGHTSOURCES
 
-layout(location = 9) in vec3 view_direction;
-layout(location = 10) in vec3 viewspace_position;
-layout(location = 11) in vec3 vertex_light_diffuse;
-layout(location = 12) in vec3 vertex_light_specular;
-layout(location = 13) in vec3 vertex_light_ambient;
-
-#endif
-
-@FragmentSurface
-
-#ifdef HAS_LIGHTSOURCES
+layout(location = 2) out vec3 view_direction;
+layout(location = 3) out vec3 viewspace_position;
+layout(location = 4) out vec3 vertex_light_diffuse;
+layout(location = 5) out vec3 vertex_light_specular;
+layout(location = 6) out vec3 vertex_light_ambient;
 
 #ifdef HAS_SHADOWS
-layout(set = 0, binding = 4) uniform highp sampler2DArray u_shadow_maps;
-#endif
+layout(set = 0, binding = 9) uniform highp sampler2DArray u_shadow_maps;
 
 float unpackFloatFromVec4i(const vec4 value)
 {
     const vec4 unpackFactors = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);
     return dot(value, unpackFactors);
 }
+#endif
+#endif
 
+@FragmentSurface
+
+#ifdef HAS_LIGHTSOURCES
 
 @FragmentAddLight
 

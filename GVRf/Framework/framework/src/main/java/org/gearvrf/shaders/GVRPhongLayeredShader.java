@@ -46,6 +46,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
     public GVRPhongLayeredShader(GVRContext gvrcontext)
     {
          super( "float4 ambient_color; float4 diffuse_color; float4 specular_color; float4 emissive_color; float3 u_color; float u_opacity; " +
+                 "float2 u_lightmap_offset; float2 u_lightmap_scale; " +
                 "int diffuseTexture1_blendop; int ambientTexture1_blendop; int specularTexture1_blendop; " +
                 "int emissiveTexture1_blendop; int lightmapTexture1_blendop; " +
                 "float specular_exponent; float line_width",
@@ -60,7 +61,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
         {
             Context context = gvrcontext.getContext();
             fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
-            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
+            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.phong_surface_layertex);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
@@ -89,7 +90,7 @@ public class GVRPhongLayeredShader extends GVRShaderTemplate
         boolean lightMapEnabled  = (renderable instanceof GVRRenderData) ? ((GVRRenderData) renderable).isLightMapEnabled() : false;
 
         if (!lightMapEnabled)
-            defines.put("lightMapTexture", 0);
+            defines.put("lightmapTexture", 0);
         if (!defines.containsKey("LIGHTSOURCES") || (defines.get("LIGHTSOURCES") != 1))
         {
             defines.put("a_normal", 0);

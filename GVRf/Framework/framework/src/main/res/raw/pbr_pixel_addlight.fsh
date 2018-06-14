@@ -1,3 +1,4 @@
+
 struct Radiance
 {
    vec3 ambient_intensity;
@@ -60,9 +61,8 @@ Reflected LightPerPixel(Radiance r, Surface s)
 {
 	vec3 l = r.direction.xyz;                  // From surface to light, unit length, view-space
     vec3 n = s.viewspaceNormal;                // normal at surface point
-    vec3 v = view_direction;                   // Vector from surface point to camera
+    vec3 v = -viewspace_position;               // Vector from surface point to camera
     vec3 h = normalize(l + v);                 // Half vector between both l and v
-    vec3 reflection = -normalize(reflect(v, n));
     float NdotL = clamp(dot(n, l), 0.001, 1.0);
     float NdotV = abs(dot(n, v)) + 0.001;
     float NdotH = clamp(dot(n, h), 0.0, 1.0);
@@ -90,5 +90,19 @@ Reflected LightPerPixel(Radiance r, Surface s)
     //
     vec3 kD = (vec3(1.0) - F) / M_PI;
     vec3 kS = F * G * D / (4.0 * NdotL * NdotV);
+
+#ifdef HAS_diffuseEnvTexture
+    vec3 worldNml = (u_view_i * vec4(n, 1.0)).xyz;
+
+    kD += SRGBtoLINEAR(texture(diffuseEnvTex, worldNml).rgb);
+#endif
+#if defined(HAS_brdfLUTTexture) && defined(HAS_specularEnvTexture)
+     vec3 reflection = reflect(-v, normalize(n));
+     reflection = (u_view_i * vec4(reflection, 1.0)).xyz;
+     vec3 specEnv = SRGBtoLINEAR(texture(specularEnvTexture, reflection).rgb);
+     vec2 brdf = SRGBtoLINEAR(texture(brdfLUTTexture, vec2(NdotV, 1.0 - s.roughness)).rgb);
+
+     kS += specEnv * (brdf.x * s.specular.rgb + brdf.y);
+#endif
     return Reflected(vec3(0), r.diffuse_intensity * kD, r.specular_intensity * kS);
 }

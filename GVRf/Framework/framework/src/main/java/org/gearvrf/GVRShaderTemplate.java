@@ -429,7 +429,7 @@ public class GVRShaderTemplate extends GVRShader
                 else if (!definedNames.containsKey(key) ||
                         (definedNames.get(key) != 0))
                 {
-                    shaderSource.append("#define HAS_" + key + " 1;\n");
+                    shaderSource.append("#define HAS_" + key + " 1\n");
                 }
                 combinedSource = combinedSource.replace("@" + key, segmentSource);
             }
@@ -541,6 +541,10 @@ public class GVRShaderTemplate extends GVRShader
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
             }
+            else
+            {
+                //Log.i(TAG, "SHADER: found shader #%d %s", nativeShader, signature);
+            }
             if (nativeShader > 0)
             {
                 rdata.setShader(nativeShader, isMultiview);
@@ -592,6 +596,10 @@ public class GVRShaderTemplate extends GVRShader
                     writeShader("F-" + signature + ".glsl", fragmentShaderSource);
                 }
                 Log.i(TAG, "SHADER: generated shader #%d %s", nativeShader, signature);
+            }
+            else
+            {
+                //Log.i(TAG, "SHADER: found shader #%d %s", nativeShader, signature);
             }
             return nativeShader;
         }

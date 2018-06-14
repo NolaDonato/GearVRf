@@ -55,7 +55,7 @@ import org.gearvrf.R;
         {
             Context context = gvrcontext.getContext();
             fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
-            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
+            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.phong_surface_multitex);
             surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
@@ -85,7 +85,7 @@ import org.gearvrf.R;
 
         if (!lightMapEnabled)
         {
-            defines.put("lightMapTexture", 0);
+            defines.put("lightmapTexture", 0);
         }
         return defines;
     }

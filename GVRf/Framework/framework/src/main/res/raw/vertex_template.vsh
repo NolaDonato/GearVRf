@@ -19,10 +19,22 @@ layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec2 a_texcoord;
 #endif
 
+
 #if defined(HAS_a_normal) && defined(HAS_LIGHTSOURCES)
 layout(location = 2) in vec3 a_normal;
 #endif
 
+#ifdef HAS_a_texcoord1
+layout(location = 3) in vec2 a_texcoord1;
+#endif
+
+#ifdef HAS_a_texcoord2
+layout(location = 4) in vec2 a_texcoord2;
+#endif
+
+#ifdef HAS_a_texcoord3
+layout(location = 5) in vec2 a_texcoord3;
+#endif
 
 #ifdef HAS_VertexSkinShader
 #ifdef HAS_a_bone_weights
@@ -37,20 +49,23 @@ layout(location = 7) in ivec4 a_bone_indices;
 #ifdef HAS_a_tangent
 layout(location = 8) in vec3 a_tangent;
 layout(location = 9) in vec3 a_bitangent;
-layout(location = 20) out mat3 tangent_matrix;
+layout(location = 7) out mat3 tangent_matrix;
 #endif
 #endif
 
+layout(location = 10) out vec2 diffuse_coord;
+layout(location = 11) out vec2 ambient_coord;
+layout(location = 12) out vec2 specular_coord;
+layout(location = 13) out vec2 emissive_coord;
+layout(location = 14) out vec2 lightmap_coord;
+layout(location = 15) out vec2 opacity_coord;
+layout(location = 16) out vec2 normal_coord;
 
-layout(location = 1) out vec3 viewspace_normal;
+layout(location = 17) out vec2 diffuse_coord1;
+layout(location = 18) out vec2 ambient_coord1;
+layout(location = 19) out vec2 specular_coord1;
+layout(location = 20) out vec2 emissive_coord1;
 
-layout(location = 2) out vec2 diffuse_coord;
-layout(location = 3) out vec2 ambient_coord;
-layout(location = 4) out vec2 specular_coord;
-layout(location = 5) out vec2 emissive_coord;
-layout(location = 6) out vec2 lightmap_coord;
-layout(location = 7) out vec2 opacity_coord;
-layout(location = 8) out vec2 normal_coord;
 
 struct Vertex
 {
@@ -61,14 +76,15 @@ struct Vertex
 	vec3 view_direction;
 };
 
+layout(location = 1) out vec3 viewspace_normal;
 
 #ifdef HAS_LIGHTSOURCES
 
-layout(location = 9) out vec3 view_direction;
-layout(location = 10) out vec3 viewspace_position;
-layout(location = 11) out vec3 vertex_light_diffuse;
-layout(location = 12) out vec3 vertex_light_specular;
-layout(location = 13) out vec3 vertex_light_ambient;
+layout(location = 2) out vec3 view_direction;
+layout(location = 3) out vec3 viewspace_position;
+layout(location = 4) out vec3 vertex_light_diffuse;
+layout(location = 5) out vec3 vertex_light_specular;
+layout(location = 6) out vec3 vertex_light_ambient;
 
 @VertexSurface
 

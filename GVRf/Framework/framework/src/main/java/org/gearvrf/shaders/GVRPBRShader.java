@@ -46,7 +46,7 @@ public class GVRPBRShader extends GVRShaderTemplate
     public GVRPBRShader(GVRContext gvrcontext)
     {
          super("float4 diffuse_color; float4 specular_color; float4 emissive_color; float metallic; float roughness; float specular_exponent; float lightmapStrength; float normalScale; float glossinessFactor",
-                "sampler2D diffuseTexture; sampler2D metallicRoughnessTexture; sampler2D specularTexture; sampler2D lightmapTexture; sampler2D diffuseTexture1; sampler2D normalTexture; sampler2D emissiveTexture",
+                "sampler2D diffuseTexture; sampler2D metallicRoughnessTexture; sampler2D specularTexture; sampler2D lightmapTexture; sampler2D normalTexture; sampler2D emissiveTexture; sampler2D brdfLUTTexture; samplerCube diffuseEnvTex; samplerCube specularEnvTexture",
                 "float3 a_position float2 a_texcoord float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float3 a_normal float4 a_bone_weights int4 a_bone_indices float4 a_tangent float4 a_bitangent",
                 GLSLESVersion.VULKAN);
 
@@ -54,7 +54,7 @@ public class GVRPBRShader extends GVRShaderTemplate
         {
             Context context = gvrcontext.getContext();
             fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template_multitex);
-            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
+            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.pbr_surface);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
@@ -63,7 +63,7 @@ public class GVRPBRShader extends GVRShaderTemplate
             addVertexLight = TextFile.readTextFile(context, R.raw.pbr_vertex_addlight);
             surfaceDef = TextFile.readTextFile(context, R.raw.pbr_surface_def);
         }
-        String defines = "#define ambient_coord metallicRoughness_coord\n";
+        String defines = "#define metallicRoughness_coord ambient_coord\n";
         setSegment("FragmentTemplate", defines + fragTemplate);
         setSegment("VertexTemplate", defines + vtxTemplate);
         setSegment("FragmentSurface", surfaceDef + surfaceShader);
