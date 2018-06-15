@@ -1,5 +1,5 @@
 
-Radiance Radiance@LightType(in U@LightType data, int index)
+Radiance Radiance@LightType(in U@LightType data, vec3 viewspaceNormal, int index)
 {
     vec4 L = u_view * vec4(data.world_direction.xyz, 0.0);
     float attenuation = 1.0;
@@ -11,7 +11,7 @@ Radiance Radiance@LightType(in U@LightType data, int index)
     if ((data.shadow_map_index >= 0) && (shadowCoord.w > 0.0))
     {
         float shadow_index = float(data.shadow_map_index);
-        float nDotL = max(dot(viewspace_normal, lightdir), 0.0);
+        float nDotL = max(dot(viewspaceNormal, lightdir), 0.0);
         float bias = 0.001 * tan(acos(nDotL));
         vec3 shadowMapPos = shadowCoord.xyz / shadowCoord.w;
         vec3 texcoord = vec3(shadowMapPos.x, shadowMapPos.y, shadow_index);
@@ -41,7 +41,7 @@ void Fragment@LightType(Surface s)
 
         if ((light.quality > 1) && (length(viewspace_position) <= light.radius))
         {
-            Radiance r = Radiance@LightType(light, i);
+            Radiance r = Radiance@LightType(light, s.viewspaceNormal, i);
             Reflected ref = LightPerPixel(r, s);
             total_light.ambient_color += ref.ambient_color;
             total_light.diffuse_color += ref.diffuse_color;

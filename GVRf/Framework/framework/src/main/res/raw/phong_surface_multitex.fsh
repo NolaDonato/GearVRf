@@ -85,9 +85,9 @@ Surface @ShaderName()
 #else
 	viewspaceNormal = viewspace_normal;
 #endif
-#ifdef HAS_lightMapTexture
-	vec2 lcoord = (lightmap_coord * u_lightMap_scale) + u_lightMap_offset;
-	diffuse *= texture(lightMapTexture, vec2(lcoord.x, 1 - lcoord.y));
+#ifdef HAS_lightmapTexture
+	vec2 lcoord = (lightmap_coord * u_lightmap_scale) + u_lightmap_offset;
+	diffuse *= texture(lightmapTexture, vec2(lcoord.x, 1 - lcoord.y));
 	return Surface(viewspaceNormal, ambient, vec4(0), specular, emission);
 #else
 	return Surface(viewspaceNormal, ambient, diffuse, specular, emission);
@@ -107,11 +107,11 @@ vec4 PixelColor(Surface s)
     total_light.specular_color = vertex_light_specular;
 
     LightPixel(s);  // Surface s not used in LightPixel
-    vec3 c = s.ambient.xyz * total_light.ambient_color +
-             s.diffuse.xyz * total_light.diffuse_color +
-             s.specular.xyz * total_light.specular_color +
-             s.emission.xyz;
-    return vec4(clamp(c, vec3(0), vec3(1)), s.diffuse.w);
+    vec3 c = s.ambient.rgb * total_light.ambient_color +
+             s.diffuse.rgb * total_light.diffuse_color +
+             s.specular.rgb * total_light.specular_color +
+             s.emission.rgb;
+    return vec4(clamp(c, vec3(0), vec3(1)), s.diffuse.a);
 }
 
 #else

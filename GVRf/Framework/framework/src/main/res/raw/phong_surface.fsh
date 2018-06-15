@@ -86,7 +86,7 @@ Surface @ShaderName()
 #else
 	viewspaceNormal = viewspace_normal;
 #endif
-#ifdef HAS_lightMapTexture
+#ifdef HAS_lightmapTexture
 	vec2 lmap_coord = (lightmap_coord * lightmap_scale) + lightmap_offset;
 	diffuse *= texture(lightmapTexture, vec2(lmap_coord.x, 1 - lmap_coord.y);
 	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, diffuse);

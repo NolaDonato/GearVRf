@@ -180,10 +180,10 @@ Surface @ShaderName()
 
 #ifdef HAS_lightmapTexture
 	vec2 lcoord = (lightmap_coord * lightmap_scale) + lightmap_offset;
-	diffuse *= texture(lightMapTexture, vec2(lcoord.x, 1 - lcoord.y));
-	#ifdef HAS_lightMapTexture1
+	diffuse *= texture(lightmapTexture, vec2(lcoord.x, 1 - lcoord.y));
+	#ifdef HAS_lightmapTexture1
 		lcoord = (lightmap_coord1 * lightmap_scale) + lightmap_offset;
-    	diffuse = BlendColors(diffuse, texture(lightmpTexture1, vec2(lcoord.x, 1 - lcoord.y), lightmapTexture1_blendop);
+    	diffuse = BlendColors(diffuse, texture(lightmapTexture1, vec2(lcoord.x, 1 - lcoord.y), lightmapTexture1_blendop);
     #endif
 	return Surface(viewspaceNormal, ambient, vec4(0), specular, emission);
 #else

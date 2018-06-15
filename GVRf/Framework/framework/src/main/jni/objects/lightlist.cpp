@@ -199,11 +199,6 @@ namespace gvr {
         mTotalUniforms = 0;
         mNumLights = 0;
         *ptr = 0;
-        if (mUseUniformBlock && (mDirty & LIGHT_ADDED))
-        {
-            createLightBlock(renderer);
-        }
-        mTotalUniforms = 0;
         if (mClassMap.size() == 0)
         {
             if (mLightBlock != nullptr)
@@ -214,8 +209,17 @@ namespace gvr {
                 LOGD("LIGHT: clearing light uniform block");
 #endif
             }
+            mDirty = 0;
             return NULL;
         }
+        if (mUseUniformBlock && (mDirty & LIGHT_ADDED))
+        {
+            if (!createLightBlock(renderer))
+            {
+                return NULL;
+            }
+        }
+
         for (auto it1 = mClassMap.begin();
              it1 != mClassMap.end();
              ++it1)
@@ -300,13 +304,7 @@ namespace gvr {
                 }
             }
         }
-        if (mNumShadowMaps != numShadowMaps)
-        {
-            mNumShadowMaps = numShadowMaps;
-#ifdef DEBUG_LIGHT
-            LOGD("LIGHT: %d shadow maps", mNumShadowMaps);
-#endif
-        }
+        mNumShadowMaps = numShadowMaps;
     }
 
     bool LightList::createLightBlock(Renderer* renderer)

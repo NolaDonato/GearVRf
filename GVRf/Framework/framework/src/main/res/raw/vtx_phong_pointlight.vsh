@@ -2,8 +2,9 @@
 Radiance Radiance@LightType(Vertex vertex, in U@LightType data, int index)
 {
     vec4 lightpos = u_view * vec4(data.world_position.xyz, 1.0);
-	vec3 lightdir = lightpos.xyz - vertex.viewspace_position;
-    float distance    = length(lightdir);
+    vec3 L = lightpos.xyz - vertex.viewspace_position;
+	vec3 lightdir = normalize(L);
+    float distance    = length(L);
     float attenuation = 1.0 / (data.attenuation_constant + data.attenuation_linear * distance +
     					data.attenuation_quadratic * (distance * distance));  
 	
