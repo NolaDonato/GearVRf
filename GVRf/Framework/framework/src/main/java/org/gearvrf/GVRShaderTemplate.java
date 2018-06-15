@@ -723,7 +723,7 @@ public class GVRShaderTemplate extends GVRShader
         StringBuilder lightFunction = new StringBuilder("");
         StringBuilder lightShaders = new StringBuilder("");
 
-        lightFunction.append("\nvoid LightVertex(Vertex vertex, Surface surface)\n{\n");
+        lightFunction.append("\nvoid LightVertex(Vertex vertex)\n{\n");
         for (Map.Entry<String, LightClass> entry : lightClasses.entrySet())
         {
             LightClass lclass = entry.getValue();
