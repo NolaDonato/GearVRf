@@ -14,10 +14,7 @@
  */
 package org.gearvrf.shaders;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.HashMap;
-import java.util.List;
 
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRRenderData;
@@ -30,7 +27,6 @@ import org.gearvrf.utility.TextFile;
 import android.content.Context;
 
 import org.gearvrf.R;
-import org.joml.Matrix4f;
 
 /**
  * Manages a set of variants on vertex and fragment shaders from the same source
@@ -41,8 +37,10 @@ public class GVRTextureShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
+    private static String surfaceDef = null;
 
     public GVRTextureShader(GVRContext gvrcontext)
     {
@@ -55,15 +53,19 @@ public class GVRTextureShader extends GVRShaderTemplate
             vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.texture_surface);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_tex);
-            addLight = TextFile.readTextFile(context, R.raw.addlight);
+            surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
+            addPixelLight = TextFile.readTextFile(context, R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
+        setSegment("FragmentAddLight", addPixelLight);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexShader", vtxShader);
         setSegment("VertexNormalShader", "");
         setSegment("VertexSkinShader", "");
+        setSegment("VertexAddLight", addVertexLight);
         setOutputMatrixCount(3);
         mHasVariants = true;
         mUsesLights = true;
@@ -95,7 +97,7 @@ public class GVRTextureShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
+        return usesLights ? "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
 }

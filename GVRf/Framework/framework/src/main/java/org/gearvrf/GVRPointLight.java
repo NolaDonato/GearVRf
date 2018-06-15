@@ -59,17 +59,24 @@ public class GVRPointLight extends GVRLight
             + " float attenuation_linear"
             + " float attenuation_quadratic"
             + " float ppad1";
-    private static String shaderSource = null;
+    private static String fragmentShader = null;
+    private static String vertexShader = null;
+
 
     public GVRPointLight(GVRContext ctx)
     {
         this(ctx, POINT_UNIFORM_DESC, null);
         setLightClass(getClass().getSimpleName());
-        if (shaderSource == null)
+        if (fragmentShader == null)
         {
-            shaderSource = TextFile.readTextFile(ctx.getContext(), R.raw.pointlight);
+            fragmentShader = TextFile.readTextFile(ctx.getContext(), R.raw.phong_pointlight);
         }
-        mFragmentShaderSource = shaderSource;
+        if (vertexShader == null)
+        {
+            vertexShader = TextFile.readTextFile(ctx.getContext(), R.raw.vtx_phong_pointlight);
+        }
+        mVertexShaderSource = vertexShader;
+        mFragmentShaderSource = fragmentShader;
     }
 
     protected GVRPointLight(GVRContext ctx, String uniformDesc, String vertexDesc)

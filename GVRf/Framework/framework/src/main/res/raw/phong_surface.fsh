@@ -28,21 +28,32 @@ layout(set = 0, binding = 15) uniform sampler2D opacityTexture;
 #endif
 
 #ifdef HAS_normalTexture
-layout(location = 16) in vec2 normal_coord;
-layout(set = 0, binding = 16) uniform sampler2D normalTexture;
 #ifdef HAS_a_tangent
-layout(location = 4) in mat3 tangent_matrix;
-#endif
+layout(location = 7) in mat3 tangent_matrix;
 #endif
 
-struct Surface
+layout(location = 16) in vec2 normal_coord;
+layout(set = 0, binding = 16) uniform sampler2D normalTexture;
+
+mat3 calculateTangentMatrix()
 {
-   vec3 viewspaceNormal;
-   vec4 ambient;
-   vec4 diffuse;
-   vec4 specular;
-   vec4 emission;
-};
+#ifdef HAS_a_tangent
+    return tangent_matrix;
+#else
+    vec3 pos_dx = dFdx(viewspace_position);
+    vec3 pos_dy = dFdy(viewspace_position);
+    vec3 tex_dx = dFdx(vec3(normal_coord, 0.0));
+    vec3 tex_dy = dFdy(vec3(normal_coord, 0.0));
+
+    vec3 dp2perp = cross(pos_dy, viewspace_normal);
+    vec3 dp1perp = cross(viewspace_normal, pos_dx);
+    vec3 t = dp2perp * tex_dx.x + dp1perp * tex_dy.x;
+    vec3 b = dp2perp * tex_dx.y + dp1perp * tex_dy.y;
+    float invmax = inversesqrt(max(dot(t, t), dot(b, b)));
+    return mat3(t * invmax, b * invmax, viewspace_normal);
+#endif
+}
+#endif
 
 
 #ifdef HAS_normalTexture
@@ -97,8 +108,7 @@ Surface @ShaderName()
 #else
 	viewspaceNormal = viewspace_normal;
 #endif
-
-#ifdef HAS_lightMapTexture
+#ifdef HAS_lightmapTexture
 	vec2 lmap_coord = (lightmap_coord * lightmap_scale) + lightmap_offset;
 	diffuse *= texture(lightmapTexture, vec2(lmap_coord.x, 1 - lmap_coord.y);
 	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, diffuse);
@@ -106,3 +116,31 @@ Surface @ShaderName()
 	return Surface(viewspaceNormal, ambient, diffuse, specular, emission);
 #endif
 }
+
+#ifdef HAS_LIGHTSOURCES
+
+void LightPixel(Surface);
+
+Reflected total_light;
+
+vec4 PixelColor(Surface s)
+{
+    total_light.ambient_color = vertex_light_ambient;
+    total_light.diffuse_color = vertex_light_diffuse;
+    total_light.specular_color = vertex_light_specular;
+
+    LightPixel(s);  // Surface s not used in LightPixel
+    vec3 c = s.ambient.xyz * total_light.ambient_color +
+             s.diffuse.xyz * total_light.diffuse_color +
+             s.specular.xyz * total_light.specular_color +
+             s.emission.xyz;
+    return vec4(clamp(c, vec3(0), vec3(1)), s.diffuse.w);
+}
+
+#else
+vec4 PixelColor(Surface s)
+{
+    return s.diffuse;
+}
+#endif
+

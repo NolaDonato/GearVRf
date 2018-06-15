@@ -1,5 +1,4 @@
 
-@MATERIAL_UNIFORMS
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_ambientTexture
@@ -28,24 +27,12 @@ layout(set = 0, binding = 15) uniform sampler2D opacityTexture;
 #endif
 
 #ifdef HAS_normalTexture
+#ifdef HAS_a_tangent
+layout(location = 7) in mat3 tangent_matrix;
+#endif
 layout(location = 16) in vec2 normal_coord;
 layout(set = 0, binding = 16) uniform sampler2D normalTexture;
-#ifdef HAS_a_tangent
-layout(location = 4) in mat3 tangent_matrix;
-#endif
-#endif
 
-
-struct Surface
-{
-   vec3 viewspaceNormal;
-   vec4 ambient;
-   vec4 diffuse;
-   vec4 specular;
-   vec4 emission;
-};
-
-#ifdef HAS_normalTexture
 mat3 calculateTangentMatrix()
 {
 #ifdef HAS_a_tangent
@@ -65,6 +52,7 @@ mat3 calculateTangentMatrix()
 #endif
 }
 #endif
+
 
 Surface @ShaderName()
 {
@@ -96,14 +84,43 @@ Surface @ShaderName()
 	viewspaceNormal = normalize(texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0);
 	viewspaceNormal = normalize(tbn * viewspaceNormal);
 #else
-    viewspaceNormal = viewspace_normal;
+	viewspaceNormal = viewspace_normal;
 #endif
-
-#ifdef HAS_lightMapTexture
-	vec2 lcoord = (lightmap_coord * u_lightMap_scale) + u_lightMap_offset;
+#ifdef HAS_lightmapTexture
+	vec2 lcoord = (lightmap_coord * u_lightmap_scale) + u_lightmap_offset;
 	diffuse *= texture(lightmapTexture, vec2(lcoord.x, 1 - lcoord.y));
-	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, emission);
+	return Surface(viewspaceNormal, ambient, vec4(0), specular, emission);
 #else
 	return Surface(viewspaceNormal, ambient, diffuse, specular, emission);
 #endif
 }
+
+#ifdef HAS_LIGHTSOURCES
+
+void LightPixel(Surface);
+
+Reflected total_light;
+
+vec4 PixelColor(Surface s)
+{
+    total_light.ambient_color = vertex_light_ambient;
+    total_light.diffuse_color = vertex_light_diffuse;
+    total_light.specular_color = vertex_light_specular;
+
+    LightPixel(s);  // Surface s not used in LightPixel
+    vec3 c = s.ambient.rgb * total_light.ambient_color +
+             s.diffuse.rgb * total_light.diffuse_color +
+             s.specular.rgb * total_light.specular_color +
+             s.emission.rgb;
+    return vec4(clamp(c, vec3(0), vec3(1)), s.diffuse.a);
+}
+
+#else
+vec4 PixelColor(Surface s)
+{
+    return s.diffuse;
+}
+#endif
+
+
+

@@ -1,9 +1,10 @@
 
 #ifdef HAS_LIGHTSOURCES
+    #define u_model u_matrices[u_matrix_offset + uint(1)]
 #ifdef HAS_MULTIVIEW
-    #define u_modelview_it u_matrices[u_matrix_offset + gl_ViewID_OVR + uint(3)]
+    #define u_modelview_it u_matrices[u_matrix_offset + gl_ViewID_OVR + uint(2)]
 #else
-    #define u_modelview_it u_matrices[u_matrix_offset + u_right + uint(3)]
+    #define u_modelview_it u_matrices[u_matrix_offset + u_right + uint(2)]
 #endif
     vertex.local_normal = vec4(normalize(a_normal), 0.0);
     vec4 pos = u_model * vertex.local_position;

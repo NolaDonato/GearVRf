@@ -24,28 +24,74 @@ import org.joml.Vector3f;
 
 /**
  * Base class for defining light sources.
- *
- * Lights are implemented by the fragment shader. Each different light
- * implementation corresponds to a subclass of GVRLight which is
- * responsible for supplying the shader source code for the light. GearVRF
- * aggregates all of the light source implementations into a single fragment
- * shader.
- *
- * Each subclass of GVRLight is a different light implementation and has
- * different shader source. The uniform descriptor is a string which gives the
- * name and type of all uniforms expected in the shader source. It is supplied
- * when a light is created to describe the expected shader input.
- *
+ * <p>
+ * Each different type of light source is implemented in Java as
+ * a subclass of {@link GVRLight}. Lights may be implemented
+ * on the GPU by the vertex shader, the fragment shader or both.
+ * The subclass provides the description of the light uniforms
+ * and vertex and or fragment shader implementations of
+ * the lighting calculations. GearVRF aggregates all of the light source
+ * implementations into the appropriate vertex or  fragment shader.
+ * <p>
+ * The uniform descriptor is a string which gives the
+ * name and type of all uniforms used by the light.
+ * It is used to generate a structure which contains
+ * the uniforms input to the light shaders.
+ * <p>
+ * The vertex descriptor is a string which gives the
+ * name and type of all varying data which is
+ * computed by the light vertex shader and passed
+ * to the light fragment shader.
+ * It is used to generate declarations for the
+ * values passed between vertex and fragment shaders.
+ * </p>
+ * In addition to the descriptors, the Java light
+ * implementation must supply either a vertex shader,
+ * a fragment shader or both. The quality of a light
+ * determines which implementation is chosen.
+ * A quality level of 1 will choose vertex lighting,
+ * bigger levels choose pixel lighting.
+ * <p>
  * GearVRF will automatically compute shadow maps for a light if shadow casting
  * is enabled. The light vertex and fragment shader must be implemented to take
- * advantage of these shadow maps.
- *
+ * advantage of these shadow maps. They are saved in an array of
+ * textures <b>u_shadow_maps</b>. The light shader can use
+ * the <b>shadow_map_index</b> uniform to access the
+ * appropriate texture.
+ * <p>
+ * To help with shader implementation, GearVRF does some
+ * parsing of the light shaders. The token "@LightType" is
+ * replaced by the name of the Java class which implements
+ * the light. For each light type used in the scene,
+ * GearVRF defines these:
+ * <table>
+ *     <tr><td>@LightType<td>Name of the Java class that implements the light</td></tr>
+ *     <tr><td>U@LightType<td>Name of the shader structure with uniforms for this light type</td></tr>
+ *     <tr><td>@LightType[]<td>Array of lights of this type</td></tr>
+ *     <tr><td>@LightType_TOTAL_LIGHTS<td>Total number of lights of this type</td></tr>
+ *     <tr><td>@LightType_VERTEX_LIGHTS<td>Number of vertex lights of this type</td></tr>
+ *     <tr><td>@LightType_PIXEL_LIGHTS<td>Number of pixel lights of this type</td></tr>
+ *     <tr><td>@LightType_MAXQUALITY<td>Maximum quality level used by light of this type</td></tr>
+ * </table>
+ * The light vertex shader must define a function <b>Vertex@LightType(Vertex)</b>
+ * that calculates the vertex lighting for all the light sources of this type.
+ * Similarly, the light fragment shader must define a function <b>Fragment@LightType(Surface)</b>
+ * that calculates the pixel lighting for all the lights.
+ * GearVRF defines a function <b>LightVertex(Vertex)</b> which computes all of the vertex
+ * lighting by calling the functions defined for each light implementation.
+ * It also defines <b>LightPixel(Surface)</b> which computes the pixel lighting
+ * in the fragment shader. The shader implementation is expected to supply
+ * definitions for the <b>vertex</b> and <b>Surface</b> structures which
+ * are compatible with the light implementations.
+ * <std c++ insert into vector/p>
  * @see GVRShaderTemplate
  * @see GVRLight#setCastShadow(boolean)
+ * @see GVRLight#setQuality(int)
  */
 public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
 {
-    protected final static String UNIFORM_DESC = "float enabled float shadow_map_index float pad1 float pad2 float4 world_position float4 world_direction ";
+    protected final static String UNIFORM_DESC = "int quality int shadow_map_index float radius int pad2 float4 world_position float4 world_direction ";
+    protected static int sDefaultQuality = 2;
     protected Matrix4f mLightRot;
     protected Vector3f mOldDir;
     protected Vector3f mOldPos;
@@ -57,6 +103,7 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     protected String mUniformDescriptor = null;
     protected String mVertexDescriptor = null;
     protected boolean mCastShadow = false;
+    protected int mQuality;
 
     protected GVRLight(GVRContext gvrContext, String uniformDesc, String vertexDesc)
     {
@@ -68,13 +115,79 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
         mOldPos = new Vector3f();
         mNewPos = new Vector3f();
         mNewDir = new Vector3f(0.0f, 0.0f, -1.0f);
-        setFloat("enabled", 1.0f);
+
+        mQuality = getDefaultQuality();
+        setInt("quality", mQuality);
+        setFloat("radius", Float.MAX_VALUE);
         setVec4("world_position", 0.0f, 0.0f, 0.0f, 10.0f);
         setVec4("world_direction", 0.0f, 0.0f, 1.0f, 0.0f);
     }
 
     static public long getComponentType() {
         return NativeLight.getComponentType();
+    }
+
+    /**
+     * Set the default quality for lights.
+     * <p>
+     * All lights created after this call will default to the new quality level.
+     * Existing lights will not be affected. The quality level of an
+     * individual light can be changed with {@link #setQuality(int)}.
+     * @param quality   non-zero integer quality level.
+     *                 (1 = per-vertex lighting, >1 = per-pixel lighting).
+     * @see #getDefaultQuality()
+     * @see #getQuality()
+     */
+    static public void setDefaultQuality(int quality)
+    {
+        if (quality < 1)
+        {
+            throw new UnsupportedOperationException("Default light quality must be greater than 1");
+        }
+        sDefaultQuality = quality;
+    }
+
+    /**
+     * Get the default quality for lights.
+     * <p>
+     * New lights will default to this quality level.
+     * The quality level of an individual light can be obtained
+     * with {@link #getQuality()}.
+     * @see #setDefaultQuality(int)
+     * @see #setQuality(int)
+     */
+    static public int getDefaultQuality() { return sDefaultQuality; }
+
+
+    /**
+     * Set the quality level for this light.
+     * By default, lights compute a new color at each vertex.
+     * This is the lowest quality level (1) but performs the best.
+     * Quality level 2 computes lighting per pixel and is computationally
+     * more expensive but gives better looking results.
+     * Quality levels greater than 2 are not officially supported
+     * @param quality   desired quality, 1 for per vertex, 2 for per pixel
+     * @see #getQuality()
+     * @see #getDefaultQuality()
+     */
+    public void setQuality(int quality)
+    {
+        mQuality = quality;
+        setInt("quality", isEnabled() ? quality : 0);
+    }
+
+    /**
+     * Get the lighting quality.
+     * If the quality is 1 or less, lighting is per vertex.
+     * Values greater than 1 indicate per pixel lighting.
+     *
+     * @return 1 for vertex lighting, 2 for pixel lighting
+     * @see #setQuality(int)
+     * @see #setDefaultQuality(int)
+     */
+    public int getQuality()
+    {
+        return mQuality;
     }
 
     /**
@@ -85,17 +198,20 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
      * intensive because it requires rendering the entire scene from the viewpoint
      * of the light. It is memory intensive because it requires keeping a framebuffer
      * (shadow map) for each shadow-casting light.
-     *
+     * <p>
      * In order for a light to actually produce shadows, it must employ a
      * shader that performs the shadow map calculation. The built-in {@link GVRDirectLight}
      * and {@link GVRSpotLight} can produce shadows. {@link GVRPointLight} does not currently implement
      * shadow casting.
-     *
+     * <p>
      * This function will create the material and shader used for making shadow maps
      * if necessary. It will also cause the HAS_SHADOWS symbol to be defined in the
      * shader if shadow casting is enabled.
      *
      * @param enableFlag true to enable shadow casting, false to disable
+     * @see #getCastShadow()
+     * @see #setShadowRange(float, float)
+     * @see {@link GVRShadowMap}
      */
     public void setCastShadow(boolean enableFlag)
     {
@@ -105,6 +221,15 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
         }
     }
 
+    /**
+     * Establish the near and far planes for the shadow
+     * cast by this light. Setting these values enables
+     * shadow mapping for the light.
+     * @param near  near plane for shadow camera
+     * @param far   far plane for shadow camera
+     * @see #setCastShadow(boolean)
+     * @see {@link GVRShadowMap}
+     */
     public void setShadowRange(float near, float far)
     {
         throw new UnsupportedOperationException("This light cannot cast shadows");
@@ -113,11 +238,15 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     /**
      * Determines if this light is currently casting shadows.
      * @return true if shadow casting enabled, else false
+     * @see #setShadowRange(float, float)
+     * @see #setCastShadow(boolean)
+     * @see {@link GVRShadowMap}
      */
     public boolean getCastShadow()
     {
         return mCastShadow;
     }
+
 
     public void setOwnerObject(GVRSceneObject newOwner)
     {
@@ -146,27 +275,13 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
         }
     }
 
-
-    /**
-     * Gets the shadow material used in constructing shadow maps.
-     * <p>
-     * The shadow map is constructed using a depth map rendered
-     * from the viewpoint of the light. This global material
-     * does not currently contain any settable properties.
-     * @return shadow map material
-     */
-    public static GVRMaterial getShadowMaterial(GVRContext ctx)
-    {
-        return GVRShadowMap.getShadowMaterial(ctx);
-    }
-
     /**
      * Enable the light.
      */
     @Override
     public void onEnable()
     {
-        setFloat("enabled", 1.0f);
+        setInt("quality", mQuality);
     }
 
     /**
@@ -175,7 +290,7 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     @Override
     public void onDisable()
     {
-        setFloat("enabled", 0.0f);
+        setInt("quality", 0);
     }
 
     /**
@@ -231,16 +346,25 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
 
     /**
      * Access the fragment shader source code implementing this light.
-     *
-     * The shader code defines a function which computes the
-     * color contributed by this light. It takes a structure of uniforms and a
-     * Surface structure as input and outputs a Radiance structure. The
-     * contents of the uniform structure is defined by the uniform descriptor. The fragment
-     * shader is responsible for computing the surface color and integrating the
-     * contribution of each light to the final fragment color. It defines the
-     * format of the Radiance and Surface structures.
+     * <p>
+     * The shader code defines a function which computes the pixel
+     * lighting for all the lights of this type used in the scene.
+     * The <b>@LightType</b> token is replaced with the name of
+     * the Java class defining that light type.
+     * GearVRF defines the shader structure <b>U@LightType</b>
+     * with the uniforms from the descriptor and an array
+     * <b>@LightType[]</b> with all of the lights of that type.
+     * The size of the array is defined by <b>@LightType_TOTAL_LIGHTS.</b>
+     * <b>@LightType_PIXEL_LIGHTS</b> defines the number of pixel lights.
+     * <p>
+     * The vertex descriptor defines the varying outputs
+     * from the vertex shader which are used by the pixel shader.
+     * Each output is actually an array, one for each light.
+     * This is a restriction of mobile GLSL - structures
+     * cannot by varying.
      * @see GVRShaderTemplate
      * @see GVRLight#getUniformDescriptor()
+     * @see GVRLight#getVertexDescriptor()
      *
      * @return string with source for light fragment shader
      */
@@ -250,16 +374,57 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     }
 
     /**
+     * Called by subclasses to supply source for the
+     * light fragment shader.
+     * <p>
+     * GearVRF replaces <b>@LightType</b> with
+     * the name of the Java class that implements this light.
+     * The vertex shader should define a function which
+     * computes the lighting for all
+     * @param s vertex shader source
+     * @see GVRShaderTemplate
+     * @see #getFragmentShaderSource()
+     * @see #setVertexShaderSource(String)
+     */
+    protected void setFragmentShaderSource(String s)
+    {
+        mFragmentShaderSource = s;
+    }
+
+    /**
+     * Called by subclasses to supply source for the
+     * light vertex shader.
+     * @param s vertex shader source
+     * @see GVRShaderTemplate
+     * @see #getVertexShaderSource()
+     * @see #setFragmentShaderSource(String)
+     */
+    protected void setVertexShaderSource(String s)
+    {
+        mVertexShaderSource = s;
+    }
+
+    /**
      * Access the vertex shader source code implementing this light.
-     *
-     * The shader code defines a function which computes the per-vertex
-     * outputs for this light. The input is a structure of uniforms and the output
-     * is a varying structure which is used by the fragment shader.
-     * The format of the vertex output for the light is defined
-     * by the vertex shader descriptor.
-     *
+     * <p>
+     * The shader code defines a function which computes the vertex
+     * lighting for all the lights of this type used in the scene.
+     * The <b>@LightType</b> token is replaced with the name of
+     * the Java class defining that light type.
+     * GearVRF defines the shader structure <b>U@LightType</b>
+     * with the uniforms from the descriptor and an array
+     * <b>@LightType[]</b> with all of the lights of that type.
+     * The size of the array is defined by <b>@LightType_TOTAL_LIGHTS.</b>
+     * <b>@LightType_VERTEX_LIGHTS</b> defines the number of vertex lights.
+     * <p>
+     * The vertex descriptor defines the varying outputs
+     * from the vertex shader which are used by the pixel shader.
+     * Each output is actually an array, one for each light.
+     * This is a restriction of mobile GLSL - structures
+     * cannot by varying.
      * @see GVRShaderTemplate
      * @see GVRLight#getVertexDescriptor()
+     * @see GVRLight#setVertexShaderSource(String)
      *
      * @return string with source for light vertex shader
      */
@@ -270,7 +435,7 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
 
     /**
      * Access the descriptor defining the shader uniforms used by this light.
-     *
+     * <p>
      * Describes the uniform data passed to the shader for this light.
      * This string produces the structure defined in the shader source code.
      * Each light object maintains a copy of these values and sends them to the
@@ -278,6 +443,7 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
      *
      * @see GVRShaderTemplate
      * @see GVRLight#getFragmentShaderSource()
+     * @see GVRLight#getVertexDescriptor()
      *
      * @return String describing light shader uniforms
      */
@@ -288,11 +454,10 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
 
     /**
      * Access the descriptor defining the vertex shader output produced by this light.
-     *
+     * <p>
      * Defines the GLSL structure representing the varying data for this light.
-     * These produce the structure defined in the shader source code.
-     * Each light object maintains a copy of these values and sends them to the
-     * shader when they are updated.
+     * These are values which are computed by the light vertex shader
+     * and later used by the light fragment shader.
      *
      * @return String describing light vertex shader output
      */
@@ -300,7 +465,6 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     {
         return mVertexDescriptor;
     }
-
 
     /**
      * Get the {@code float} bound to the shader uniform {@code key}.
@@ -541,6 +705,17 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
     }
 
 
+    /**
+     * Get the index of this light.
+     * <p>
+     * The lights of a particular type are numbered
+     * starting at 0. The index is only unique
+     * within a given type of light.
+     * This index places the light instance
+     * in the array of lights.
+     * </p>
+     * @return 0 base light index
+     */
     public int getLightIndex()
     {
         return NativeLight.getLightIndex(getNative());
@@ -551,16 +726,34 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
         NativeLight.setLightClass(getNative(), className);
     }
 
-    String getShaderType(String name)
+    /**
+     * Get the GLSL type corresponding the the
+     * input descriptor type. Descriptors use
+     * names like "float4" and "int4" and
+     * GLSL prefers "vec4" and "ivec4".
+     * @param descriptorType uniform or vertex descriptor type
+     * @return string with GLSL type
+     */
+    String getShaderType(String descriptorType)
     {
-        return NativeLight.getShaderType(getNative(), name);
+        return NativeLight.getShaderType(getNative(), descriptorType);
     }
 
+    /**
+     * Constructs the GLSL uniform definitions for this light
+     * @return string with GLSL light uniforms
+     */
     String makeShaderLayout()
     {
         return NativeLight.makeShaderLayout(getNative());
     }
 
+    /**
+     * Constructs the definition of the uniform block
+     * containing all the light sources in the scene.
+     * @param scene GVRScene with lights
+     * @return GLSL shader definition for light block
+     */
     static String makeShaderBlock(GVRScene scene)
     {
         return NativeLight.makeShaderBlock(scene.getNative());
@@ -572,7 +765,7 @@ public class GVRLight extends GVRJavaComponent implements GVRDrawFrameListener
      */
     public void onDrawFrame(float frameTime)
     {
-        if (!isEnabled() || (owner == null) || (getFloat("enabled") <= 0.0f))
+        if (!isEnabled() || (owner == null))
         {
             return;
         }

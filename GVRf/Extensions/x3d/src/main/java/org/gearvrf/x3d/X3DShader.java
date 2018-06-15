@@ -3,7 +3,6 @@ package org.gearvrf.x3d;
 import android.content.Context;
 
 import org.gearvrf.GVRContext;
-import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRShaderData;
 import org.gearvrf.GVRShaderTemplate;
@@ -18,8 +17,11 @@ public class X3DShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
+    private static String surfaceDef = null;
+
 
     public X3DShader(GVRContext gvrcontext)
     {
@@ -32,20 +34,22 @@ public class X3DShader extends GVRShaderTemplate
         {
             Context context = gvrcontext.getContext();
             fragTemplate = TextFile.readTextFile(context, org.gearvrf.R.raw.fragment_template);
-            vtxTemplate = TextFile.readTextFile(context, org.gearvrf.R.raw.vertex_template_multitex).
-                            replaceFirst("@MATRIX_UNIFORMS", "@MATRIX_UNIFORMS\n@MATERIAL_UNIFORMS\n");
+            vtxTemplate = TextFile.readTextFile(context, org.gearvrf.R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_surface);
             vtxShader = TextFile.readTextFile(context, org.gearvrf.x3d.R.raw.x3d_vertex);
-            addLight = TextFile.readTextFile(context, org.gearvrf.R.raw.addlight);
+            surfaceDef = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_surface_def);
+            addPixelLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, org.gearvrf.R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexShader", vtxShader);
-        setSegment("VertexNormalShader", "");
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexSkinShader", "");
-
+        setSegment("VertexNormalShader", "");
+        setSegment("VertexAddLight", addVertexLight);
         mHasVariants = true;
         mUsesLights = true;
     }
@@ -64,7 +68,7 @@ public class X3DShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
+        return usesLights ? "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
     protected void setMaterialDefaults(GVRShaderData material)

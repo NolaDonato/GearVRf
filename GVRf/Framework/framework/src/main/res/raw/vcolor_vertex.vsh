@@ -18,16 +18,6 @@ layout ( location = 0 ) out vec4 v_color;
 void main()
 {
     vec4 pos = vec4(a_position, 1);
-    mat4 mvp = u_mvp;
-
-#ifdef HAS_MULTIVIEW
-    bool render_mask = (u_render_mask & (gl_ViewID_OVR + uint(1))) > uint(0) ? true : false;
-    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(gl_ViewID_OVR));
-    mvp = mvp * float(render_mask);
-#else
-	//generate right eye mvp from left
-    mvp[3][0] = mvp[3][0] - (u_proj_offset * float(u_right));
-#endif
-    gl_Position = mvp  * pos;
+    gl_Position = u_mvp  * pos;
     v_color = a_color;
 }

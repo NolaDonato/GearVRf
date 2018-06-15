@@ -43,6 +43,8 @@ namespace gvr
         VIEW_INVERSE = 5,
         MODEL = 7,
         MVP = 8,
+        LEFT_MVP = 8,
+        RIGHT_MVP = 9,
         MAX_MATRIX = 12
     };
 

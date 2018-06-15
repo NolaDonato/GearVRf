@@ -1,4 +1,17 @@
 
+<<<<<<< HEAD:GVRf/Framework/framework/src/main/res/raw/pbr_addlight.fsh
+=======
+struct Radiance
+{
+   vec3 ambient_intensity;
+   vec3 diffuse_intensity;
+   vec3 specular_intensity;
+   vec3 direction;
+   float attenuation;
+};
+
+//
+>>>>>>> vertexlight:GVRf/Framework/framework/src/main/res/raw/pbr_pixel_addlight.fsh
 // Schlick Implementation of microfacet occlusion from
 // "An Inexpensive BRDF Model for Physically based Rendering" by Christophe Schlick.
 //
@@ -47,6 +60,7 @@ float microfacetDistribution(float NdotH, float alphaRoughness)
     return roughnessSq / (M_PI * f * f);
 }
 
+<<<<<<< HEAD:GVRf/Framework/framework/src/main/res/raw/pbr_addlight.fsh
 
 
 
@@ -78,6 +92,63 @@ vec3 getIBLContribution(float perceptualRoughness, float NdotV, vec3 n, vec3 ref
 
 
 vec4 AddLight(Surface s, Radiance r)
+=======
+Reflected LightPerPixel2(Radiance r, Surface s)
+{
+	vec3 l = r.direction.xyz;                  // From surface to light, unit length, view-space
+    vec3 n = s.viewspaceNormal;                // normal at surface point
+    vec3 v = -viewspace_position;              // Vector from surface point to camera
+    vec3 h = normalize(l + v);                 // Half vector between both l and v
+    float NdotL = clamp(dot(n, l), 0.001, 1.0);
+    float NdotV = abs(dot(n, v)) + 0.001;
+    float NdotH = clamp(dot(n, h), 0.0, 1.0);
+    float LdotH = clamp(dot(l, h), 0.0, 1.0);
+    float VdotH = clamp(dot(v, h), 0.0, 1.0);
+    float alphaRoughness = s.roughness * s.roughness;
+
+    //
+    // Calculate surface reflection
+    // Fresnel Schlick Simplified implementation of fresnel from
+    // "An Inexpensive BRDF Model for Physically based Rendering" by Christophe Schlick.
+    //
+    vec3 specularEnvironmentR0 = s.specular.rgb;
+    vec3 specularEnvironmentR90 = vec3(s.brdf.y);
+    vec3 F = specularEnvironmentR0 + (specularEnvironmentR90 - specularEnvironmentR0) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
+    //vec3 F = s.specular.rgb + (vec3(s.brdf.y) - s.specular.rgb) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
+
+    float G = geometricOcclusionSchlick(NdotL, NdotV, s.roughness); // Schlick implementation
+//  float G = geometricOcclusionSmith(NdotL, NdotV, alphaRoughess); // Smith implementation
+//  float G = geometricOcclusionCT(NdotL, NdotV, NdotH, VdotH);     // Cook Torrance implementation
+    float D = microfacetDistribution(NdotH, alphaRoughness);
+
+    //
+    // calculate diffuse and specular contribution
+    // From Schlick BRDF model from "An Inexpensive BRDF Model for Physically-based Rendering"
+    //
+	vec3 diffuse = (vec3(1.0) - F) / M_PI;
+    vec3 specular = F * G * D / (4.0 * NdotL * NdotV);
+
+	specular *= NdotL * r.specular_intensity;
+    diffuse *= NdotL * r.diffuse_intensity;
+
+#ifdef HAS_diffuseEnvTexture
+    vec3 worldNml = (u_view_i * vec4(n, 1.0)).xyz;
+
+    diffuse += SRGBtoLINEAR(texture(diffuseEnvTex, worldNml).rgb);
+#endif
+#if defined(HAS_brdfLUTTexture) && defined(HAS_specularEnvTexture)
+     vec3 reflection = reflect(-v, normalize(n));
+     reflection = (u_view_i * vec4(reflection, 1.0)).xyz;
+     vec3 specEnv = SRGBtoLINEAR(texture(specularEnvTexture, reflection).rgb);
+     vec2 brdf = SRGBtoLINEAR(texture(brdfLUTTexture, vec2(NdotV, 1.0 - s.roughness)).rgb);
+
+     specular += specEnv * (brdf.x * s.specular.rgb + brdf.y);
+#endif
+    return Reflected(vec3(0), diffuse, specular);
+}
+
+Reflected LightPerPixel(Radiance r, Surface s)
+>>>>>>> vertexlight:GVRf/Framework/framework/src/main/res/raw/pbr_pixel_addlight.fsh
 {
 	vec3 l = r.direction.xyz;                  // From surface to light, unit length, view-space
     vec3 n = s.viewspaceNormal;                // normal at surface point
@@ -113,8 +184,10 @@ vec4 AddLight(Surface s, Radiance r)
     vec3 kS = F * G * D / (4.0 * NdotL * NdotV);
 
     // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-    vec3 color = NdotL * ((r.diffuse_intensity * kD) + (r.specular_intensity * kS)) + s.emission.xyz;
+    vec3 diffuse = NdotL * r.diffuse_intensity * kD;
+    vec3 specular = NdotL * r.specular_intensity * kS;
 
+<<<<<<< HEAD:GVRf/Framework/framework/src/main/res/raw/pbr_addlight.fsh
     color += getIBLContribution(s.roughness, NdotV, (u_view_i * vec4(n, 1.0)).xyz,
                                 (u_view_i * vec4(reflection, 1.0)).xyz, s.specular, s.diffuse.xyz);
 
@@ -141,3 +214,7 @@ vec4 AddLight(Surface s, Radiance r)
 
     return vec4(pow(color, vec3(1.0 / 2.2)), s.diffuse.w);
 }
+=======
+    return Reflected(vec3(0), diffuse, specular);
+}
+>>>>>>> vertexlight:GVRf/Framework/framework/src/main/res/raw/pbr_pixel_addlight.fsh

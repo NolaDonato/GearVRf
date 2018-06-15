@@ -36,37 +36,43 @@ public class GVRPBRShader extends GVRShaderTemplate
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
+    private static String surfaceDef = null;
 
     public GVRPBRShader(GVRContext gvrcontext)
     {
          super("float4 diffuse_color; float4 specular_color; float4 emissive_color; float metallic; float roughness; float specular_exponent; float lightmapStrength; float normalScale; float glossinessFactor",
                 "sampler2D diffuseTexture; sampler2D metallicRoughnessTexture; sampler2D specularTexture; sampler2D lightmapTexture; sampler2D normalTexture; sampler2D emissiveTexture; sampler2D brdfLUTTexture; samplerCube diffuseEnvTex; samplerCube specularEnvTexture",
-                "float3 a_position float2 a_texcoord float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float3 a_normal float4 a_bone_weights int4 a_bone_indices float4 a_tangent float4 a_bitangent",
+                "float3 a_position float2 a_texcoord float3 a_normal float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float4 a_bone_weights int4 a_bone_indices float4 a_tangent float4 a_bitangent",
                 GLSLESVersion.VULKAN);
 
         if (fragTemplate == null)
         {
             Context context = gvrcontext.getContext();
-            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template_multitex);
-            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
+            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
+            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.pbr_surface);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
             skinShader = TextFile.readTextFile(context, R.raw.vertexskinning);
-            addLight = TextFile.readTextFile(context, R.raw.pbr_addlight);
+            addPixelLight = TextFile.readTextFile(context, R.raw.pbr_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.pbr_vertex_addlight);
+            surfaceDef = TextFile.readTextFile(context, R.raw.pbr_surface_def);
         }
         String defines = "#define metallicRoughness_coord ambient_coord\n";
         setSegment("FragmentTemplate", defines + fragTemplate);
         setSegment("VertexTemplate", defines + vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
-        setSegment("FragmentAddLight", addLight);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
+        setSegment("FragmentAddLight", addPixelLight);
         setSegment("VertexSkinShader", skinShader);
         setSegment("VertexShader", vtxShader);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexNormalShader", normalShader);
+        setSegment("VertexAddLight", addVertexLight);
 
         mHasVariants = true;
         mUsesLights = true;

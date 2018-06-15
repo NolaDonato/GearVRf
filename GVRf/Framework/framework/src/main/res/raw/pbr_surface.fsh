@@ -1,12 +1,9 @@
-@MATERIAL_UNIFORMS
 
-const float M_PI = 3.141592653589793;
-const float c_MinRoughness = 0.04;
 
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_metallicRoughnessTexture
-layout(location = 11) in vec2 ambient_coord;
+layout(location = 11) in vec2 metallicRoughness_coord;
 layout(set = 0, binding = 11) uniform sampler2D metallicRoughnessTexture;
 #endif
 
@@ -25,16 +22,16 @@ layout(location = 14) in vec2 lightmap_coord;
 layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
 #endif
 
+#ifdef HAS_brdfLUTTexture
+layout(set = 0, binding = 15) uniform sampler2D brdfLUTTexture;
+#endif
+
 #ifdef HAS_normalTexture
 layout(location = 16) in vec2 normal_coord;
 layout(set = 0, binding = 16) uniform sampler2D normalTexture;
 #ifdef HAS_a_tangent
-layout(location = 4) in mat3 tangent_matrix;
+layout(location = 7) in mat3 tangent_matrix;
 #endif
-#endif
-
-#ifdef HAS_brdfLUTTexture
-layout(set = 0, binding = 15) uniform sampler2D brdfLUTTexture;
 #endif
 
 #ifdef HAS_diffuseEnvTex
@@ -44,16 +41,6 @@ layout(set = 0, binding = 17) uniform samplerCube diffuseEnvTex;
 #ifdef HAS_specularEnvTexture
 layout(set = 0, binding = 18) uniform samplerCube specularEnvTexture;
 #endif
-
-struct Surface
-{
-    vec4 diffuse;               // color contribution from diffuse lighting
-    vec3 specular;              // color contribution from specular lighting
-    vec3 emission;              // emitted light color
-    vec3 viewspaceNormal;       // normal in view space
-    vec2 brdf;                  // reflectance at 0 and 90
-    float roughness;            // roughness value, as authored by the model creator (input to shader)
-};
 
 vec3 SRGBtoLINEAR(vec3 srgbIn)
 {
@@ -84,7 +71,6 @@ mat3 calculateTangentMatrix()
 
 Surface @ShaderName()
 {
-
     float perceptualRoughness;
     vec3 diffuse;
     vec3 specular;
@@ -93,30 +79,30 @@ Surface @ShaderName()
     //specular glossiness workflow
 #ifdef HAS_glossinessFactor
     diffuse = diffuse_color.rgb;
-        specular = specular_color.rgb;
-        float glossiness = glossinessFactor;
+    specular = specular_color.rgb;
+    float glossiness = glossinessFactor;
 
-        #ifdef HAS_specularTexture
-                specular.xyz *= SRGBtoLINEAR(texture(specularTexture, specular_coord.xy).rgb);
-                glossiness *= texture(specularTexture, specular_coord.xy).a;
-        #endif
+#ifdef HAS_specularTexture
+    specular.xyz *= SRGBtoLINEAR(texture(specularTexture, specular_coord.xy).rgb);
+    glossiness *= texture(specularTexture, specular_coord.xy).a;
+#endif
 
-        #ifdef HAS_diffuseTexture
-                diffuse.xyz *= SRGBtoLINEAR(texture(diffuseTexture, diffuse_coord.xy).rgb);
-        #endif
-        perceptualRoughness = 1.0f - glossiness;
+#ifdef HAS_diffuseTexture
+     diffuse.xyz *= SRGBtoLINEAR(texture(diffuseTexture, diffuse_coord.xy).rgb);
+#endif
+     perceptualRoughness = 1.0f - glossiness;
 
-#else
+#else // HAS_glossinessFactor
     //metallic roughness workflow
     vec4 basecolor = diffuse_color;
     float metal = metallic;
     perceptualRoughness = roughness;
 #ifdef HAS_metallicRoughnessTexture
     // Roughness is stored in the 'g' channel, metallic is stored in the 'b' channel.
-                // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
-                vec4 mrSample = texture(metallicRoughnessTexture, metallicRoughness_coord.xy);
-                perceptualRoughness = mrSample.g * perceptualRoughness;
-                metal = mrSample.b * metal;
+    // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
+    vec4 mrSample = texture(metallicRoughnessTexture, metallicRoughness_coord.xy);
+    perceptualRoughness = mrSample.g * perceptualRoughness;
+    metal = mrSample.b * metal;
 #endif
     metal = clamp(metal, 0.0, 1.0);
 
@@ -146,12 +132,40 @@ Surface @ShaderName()
 #endif
 #if defined(HAS_normalTexture)
     viewspaceNormal = texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0;
-        viewspaceNormal = normalize(calculateTangentMatrix() * viewspaceNormal * vec3(normalScale, normalScale, 1.0));
+    viewspaceNormal = normalize(calculateTangentMatrix() * viewspaceNormal * vec3(normalScale, normalScale, 1.0));
 #else
     viewspaceNormal = viewspace_normal;
 #endif
-
-    return Surface(vec4(diffuse, diffuse_color.a), specular, emission,
-                   viewspaceNormal, brdf,
-                   perceptualRoughness);
+    return Surface(viewspaceNormal, vec4(diffuse, diffuse_color.a),
+                   specular, emission,
+                   brdf, perceptualRoughness);
 }
+
+#ifdef HAS_LIGHTSOURCES
+
+void LightPixel(Surface);
+
+Reflected total_light;
+
+vec4 PixelColor(Surface s)
+{
+    total_light.diffuse_color = vertex_light_diffuse;
+    total_light.specular_color = vertex_light_specular;
+
+    LightPixel(s);
+    vec3 c = s.emission.rgb +
+             s.diffuse.rgb * total_light.diffuse_color +
+             total_light.specular_color;
+#ifdef HAS_lightmapTexture
+    float ao = texture(lightmapTexture, lightmap_coord).r;
+    c = mix(c, c * ao, lightmapStrength);
+#endif
+    return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.a);
+}
+
+#else
+vec4 PixelColor(Surface s)
+{
+    return s.diffuse;
+}
+#endif

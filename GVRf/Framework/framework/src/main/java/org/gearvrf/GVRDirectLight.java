@@ -65,21 +65,26 @@ public class GVRDirectLight extends GVRLight
         + " float4 specular_intensity"
         + " float4 sm0 float4 sm1 float4 sm2 float4 sm3";
 
+    protected final static String DIRECT_VERTEX_DESC =
+            "float4 shadow_position; ";
+
     public GVRDirectLight(GVRContext gvrContext)
     {
-        this(gvrContext, DIRECT_UNIFORM_DESC,  "float4 shadow_position");
+        this(gvrContext, DIRECT_UNIFORM_DESC,  DIRECT_VERTEX_DESC);
         if (useShadowShader)
         {
             if (fragmentShader == null)
-                fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.directshadowlight);
+                fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.phong_directlight_shadow);
             if (vertexShader == null)
-                vertexShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.vertex_shadow);
+                vertexShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.vtx_phong_directlight_shadow);
             mVertexShaderSource = vertexShader;
         }
         else if (fragmentShader == null)
         {
-            fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.directlight);
-        }
+            fragmentShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.phong_directlight);
+            if (vertexShader == null)
+                vertexShader = TextFile.readTextFile(gvrContext.getContext(), R.raw.vtx_phong_directlight);
+       }
         mFragmentShaderSource = fragmentShader;
     }
 
@@ -88,7 +93,7 @@ public class GVRDirectLight extends GVRLight
         super(ctx, uniformDesc, vertexDesc);
         setLightClass(getClass().getSimpleName());
         mChanged.set(true);
-        setFloat("shadow_map_index", -1.0f);
+        setInt("shadow_map_index", -1);
         setAmbientIntensity(0.0f, 0.0f, 0.0f, 1.0f);
         setDiffuseIntensity(1.0f, 1.0f, 1.0f, 1.0f);
         setSpecularIntensity(1.0f, 1.0f, 1.0f, 1.0f);
@@ -282,7 +287,7 @@ public class GVRDirectLight extends GVRLight
      */
     public void onDrawFrame(float frameTime)
     {
-        if (!isEnabled() || (owner == null) || (getFloat("enabled") <= 0.0f))
+        if (!isEnabled() || (owner == null))
         {
             return;
         }

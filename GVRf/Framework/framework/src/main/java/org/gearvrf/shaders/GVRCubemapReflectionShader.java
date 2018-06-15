@@ -62,15 +62,16 @@ import org.joml.Matrix4f;
  * Shader which renders a cubemap texture as a reflection map.
  * This shader ignores light sources.
  * @<code>
- *     a_position   position vertex attribute
- *     a_normal     normal vertex attribute
- *     u_mv         model/view matrix
- *     u_mv_it      model/view inverse matrix
- *     u_mvp        model/view/projection matrix
- *     u_color      color to modulate reflection map
- *     u_opacity    opacity of reflection map
- *     u_texture    cubemap texture
- *     u_view_i     view inverse matrix???
+ *     a_position      position vertex attribute
+ *     a_normal        normal vertex attribute
+ *     u_modelview_it  model/view inverse matrix
+ *     u_view          view matrix
+ *     u_mvp           model/view/projection matrix
+       u_model         model matrix
+ *     u_color         color to modulate reflection map
+ *     u_opacity       opacity of reflection map
+ *     u_texture       cubemap texture
+
  * </code>
  */
 public class GVRCubemapReflectionShader extends GVRShaderTemplate
@@ -93,6 +94,6 @@ public class GVRCubemapReflectionShader extends GVRShaderTemplate
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^";
+        return "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^";
     }
 }

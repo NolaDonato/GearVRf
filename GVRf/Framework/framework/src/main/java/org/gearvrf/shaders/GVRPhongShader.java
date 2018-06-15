@@ -14,11 +14,7 @@
  */
 package org.gearvrf.shaders;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRRenderData;
@@ -31,7 +27,6 @@ import org.gearvrf.utility.TextFile;
 import android.content.Context;
 
 import org.gearvrf.R;
-import org.joml.Matrix4f;
 
 /**
     * Manages a set of variants on vertex and fragment shaders from the same source
@@ -42,36 +37,42 @@ import org.joml.Matrix4f;
     private static String fragTemplate = null;
     private static String vtxTemplate = null;
     private static String surfaceShader = null;
-    private static String addLight = null;
+    private static String addVertexLight = null;
+    private static String addPixelLight = null;
     private static String vtxShader = null;
     private static String normalShader = null;
     private static String skinShader = null;
+    private static String surfaceDef = null;
 
-       public GVRPhongShader(GVRContext gvrcontext)
-       {
-            super("float4 ambient_color; float4 diffuse_color; float4 specular_color; float4 emissive_color; float3 u_color; float u_opacity; float specular_exponent; float line_width; float2 u_lightmap_offset; float2 u_lightmap_scale",
-                   "sampler2D diffuseTexture; sampler2D ambientTexture; sampler2D specularTexture; sampler2D opacityTexture; sampler2D lightmapTexture; sampler2D normalTexture; sampler2D emissiveTexture",
-                   "float3 a_position float2 a_texcoord float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float3 a_normal float4 a_bone_weights int4 a_bone_indices float3 a_tangent float3 a_bitangent",
-                   GLSLESVersion.VULKAN);
+    public GVRPhongShader(GVRContext gvrcontext)
+    {
+        super("float4 ambient_color; float4 diffuse_color; float4 specular_color; float4 emissive_color; float3 u_color; float u_opacity; float specular_exponent; float line_width; float2 u_lightmap_offset; float2 u_lightmap_scale",
+              "sampler2D diffuseTexture; sampler2D ambientTexture; sampler2D specularTexture; sampler2D emissiveTexture; sampler2D lightmapTexture; sampler2D opacityTexture; sampler2D normalTexture",
+              "float3 a_position float2 a_texcoord float3 a_normal float2 a_texcoord1 float2 a_texcoord2 float2 a_texcoord3 float4 a_bone_weights int4 a_bone_indices float4 a_tangent float4 a_bitangent",
+              GLSLESVersion.VULKAN);
 
         if (fragTemplate == null)
         {
             Context context = gvrcontext.getContext();
-            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template_multitex);
-            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template_multitex);
+            fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
+            vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.phong_surface_multitex);
+            surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
             vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             normalShader = TextFile.readTextFile(context, R.raw.normalmap);
             skinShader = TextFile.readTextFile(context, R.raw.vertexskinning);
-            addLight = TextFile.readTextFile(context, R.raw.addlight);
+            addPixelLight = TextFile.readTextFile(context, R.raw.phong_pixel_addlight);
+            addVertexLight = TextFile.readTextFile(context, R.raw.phong_vertex_addlight);
         }
         setSegment("FragmentTemplate", fragTemplate);
         setSegment("VertexTemplate", vtxTemplate);
-        setSegment("FragmentSurface", surfaceShader);
-        setSegment("FragmentAddLight", addLight);
-        setSegment("VertexSkinShader", skinShader);
+        setSegment("FragmentSurface", surfaceDef + surfaceShader);
+        setSegment("FragmentAddLight", addPixelLight);
+        setSegment("VertexSurface", surfaceDef);
         setSegment("VertexShader", vtxShader);
+        setSegment("VertexSkinShader", skinShader);
         setSegment("VertexNormalShader", normalShader);
+        setSegment("VertexAddLight", addVertexLight);
         mHasVariants = true;
         mUsesLights = true;
     }
@@ -103,7 +104,7 @@ import org.joml.Matrix4f;
     @Override
     public String getMatrixCalc(boolean usesLights)
     {
-        return usesLights ? "left_mvp; right_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
+        return usesLights ? "left_mvp; model; (model~ * inverse_left_view)^; (model~ * inverse_right_view)^" : null;
     }
 
 }
