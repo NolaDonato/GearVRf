@@ -76,9 +76,8 @@ Reflected LightPerPixel(Radiance r, Surface s)
     // "An Inexpensive BRDF Model for Physically based Rendering" by Christophe Schlick.
     //
     vec3 specularEnvironmentR0 = s.specular.rgb;
-    vec3 specularEnvironmentR90 = vec3(s.brdf.y);
+    vec3 specularEnvironmentR90 = vec3(s.reflectance90);
     vec3 F = specularEnvironmentR0 + (specularEnvironmentR90 - specularEnvironmentR0) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
-    //vec3 F = s.specular.rgb + (vec3(s.brdf.y) - s.specular.rgb) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
 
     float G = geometricOcclusionSchlick(NdotL, NdotV, s.roughness); // Schlick implementation
 //  float G = geometricOcclusionSmith(NdotL, NdotV, alphaRoughess); // Smith implementation
@@ -92,9 +91,8 @@ Reflected LightPerPixel(Radiance r, Surface s)
 	vec3 diffuse = (vec3(1.0) - F) / M_PI;
     vec3 specular = F * G * D / (4.0 * NdotL * NdotV);
 
-	specular *= NdotL * r.specular_intensity;
-    diffuse *= NdotL * r.diffuse_intensity;
-
+    diffuse *= NdotL * s.diffuse.rgb * r.diffuse_intensity;
+    specular *= NdotL * r.specular_intensity;
 #ifdef HAS_diffuseEnvTexture
     vec3 worldNml = (u_view_i * vec4(n, 1.0)).xyz;
 
@@ -108,6 +106,12 @@ Reflected LightPerPixel(Radiance r, Surface s)
 
      specular += specEnv * (brdf.x * s.specular.rgb + brdf.y);
 #endif
-    return Reflected(vec3(0), diffuse, specular);
+    vec3 color = diffuse + specular + s.emission.rgb;
+#ifdef HAS_lightmapTexture
+    float ao = texture(lightmapTexture, lightmap_coord).r;
+    color = mix(color, color * ao, lightmapStrength);
+#endif
+    color = pow(color, vec3(1.0 / 2.2));
+    return Reflected(vec3(0), color, vec3(0));
 }
 

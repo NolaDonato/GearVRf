@@ -5,7 +5,7 @@ struct Surface
     vec4 diffuse;               // color contribution from diffuse lighting
     vec3 specular;              // color contribution from specular lighting
     vec3 emission;              // emitted light color
-    vec2 brdf;                  // reflectance at 0 and 90
+    float reflectance90;        // reflectance at 90 degrees
     float roughness;            // roughness value, as authored by the model creator (input to shader)
 };
 

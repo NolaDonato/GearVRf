@@ -75,6 +75,7 @@ Surface @ShaderName()
     vec3 diffuse;
     vec3 specular;
     vec3 emission = emissive_color.xyz;
+    float ao = 1.0;
 
     //specular glossiness workflow
 #ifdef HAS_glossinessFactor
@@ -83,12 +84,12 @@ Surface @ShaderName()
     float glossiness = glossinessFactor;
 
 #ifdef HAS_specularTexture
-    specular.xyz *= SRGBtoLINEAR(texture(specularTexture, specular_coord.xy).rgb);
+    specular.rgb *= SRGBtoLINEAR(texture(specularTexture, specular_coord.xy).rgb);
     glossiness *= texture(specularTexture, specular_coord.xy).a;
 #endif
 
 #ifdef HAS_diffuseTexture
-     diffuse.xyz *= SRGBtoLINEAR(texture(diffuseTexture, diffuse_coord.xy).rgb);
+     diffuse.rgb *= SRGBtoLINEAR(texture(diffuseTexture, diffuse_coord.xy).rgb);
 #endif
      perceptualRoughness = 1.0f - glossiness;
 
@@ -114,7 +115,7 @@ Surface @ShaderName()
     diffuse = basecolor.rgb * (vec3(1.0) - f0);
     diffuse *= 1.0 - metal;
     specular = mix(f0, basecolor.rgb, metal);
-#endif
+#endif // HAS_glossinessFactor
 
     perceptualRoughness = clamp(perceptualRoughness, c_MinRoughness, 1.0);
 
@@ -124,7 +125,6 @@ Surface @ShaderName()
 
     float reflectance = max(max(specular.r, specular.g), specular.b);
     float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
-    vec2 brdf = vec2(reflectance, reflectance90);
     vec3 viewspaceNormal;
 
 #ifdef HAS_emissiveTexture
@@ -138,7 +138,7 @@ Surface @ShaderName()
 #endif
     return Surface(viewspaceNormal, vec4(diffuse, diffuse_color.a),
                    specular, emission,
-                   brdf, perceptualRoughness);
+                   reflectance90, perceptualRoughness);
 }
 
 #ifdef HAS_LIGHTSOURCES
@@ -149,18 +149,9 @@ Reflected total_light;
 
 vec4 PixelColor(Surface s)
 {
-    total_light.diffuse_color = vertex_light_diffuse;
-    total_light.specular_color = vertex_light_specular;
-
+    total_light.diffuse_color = vec3(0);
     LightPixel(s);
-    vec3 c = s.emission.rgb +
-             s.diffuse.rgb * total_light.diffuse_color +
-             total_light.specular_color;
-#ifdef HAS_lightmapTexture
-    float ao = texture(lightmapTexture, lightmap_coord).r;
-    c = mix(c, c * ao, lightmapStrength);
-#endif
-    return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.a);
+    return vec4(total_light.diffuse_color, s.diffuse.a);
 }
 
 #else
