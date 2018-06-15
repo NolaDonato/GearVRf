@@ -2,7 +2,7 @@
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_metallicRoughnessTexture
-layout(location = 11) in vec2 ambient_coord;
+layout(location = 11) in vec2 metallicRoughness_coord;
 layout(set = 0, binding = 11) uniform sampler2D metallicRoughnessTexture;
 #endif
 
@@ -153,14 +153,14 @@ vec4 PixelColor(Surface s)
     total_light.specular_color = vertex_light_specular;
 
     LightPixel(s);
-    vec3 c = s.diffuse.xyz * total_light.diffuse_color +
-             total_light.specular_color + s.emission.xyz;
+    vec3 c = s.emission.rgb +
+             s.diffuse.rgb * total_light.diffuse_color +
+             total_light.specular_color;
 #ifdef HAS_lightmapTexture
     float ao = texture(lightmapTexture, lightmap_coord).r;
     c = mix(c, c * ao, lightmapStrength);
 #endif
-return s.diffuse
-    //return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.a);
+    return vec4(pow(c, vec3(1.0 / 2.2)), s.diffuse.a);
 }
 
 #else

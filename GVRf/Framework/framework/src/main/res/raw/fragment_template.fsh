@@ -23,17 +23,6 @@ layout(location = 4) in vec3 vertex_light_diffuse;
 layout(location = 5) in vec3 vertex_light_specular;
 layout(location = 6) in vec3 vertex_light_ambient;
 
-
-#ifdef HAS_SHADOWS
-layout(set = 0, binding = 9) uniform highp sampler2DArray u_shadow_maps;
-
-float unpackFloatFromVec4i(const vec4 value)
-{
-    const vec4 bitSh = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);
-    const vec4 unpackFactors = vec4( 1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0 );
-    return dot(value,unpackFactors);
-}
-#endif
 #endif
 
 @FragmentSurface

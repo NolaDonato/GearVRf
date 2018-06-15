@@ -7,10 +7,10 @@ Radiance Radiance@LightType(in U@LightType data, int index)
 
 #ifdef HAS_SHADOWS
     vec4 shadowCoord = @LightType_shadow_position[index];
-    float shadow_index = float(data.shadow_map_index);
 
-    if ((shadow_index >= 0.0) && (shadowCoord.w > 0.0))
+    if ((data.shadow_map_index >= 0) && (shadowCoord.w > 0.0))
     {
+        float shadow_index = float(data.shadow_map_index);
         float nDotL = max(dot(viewspace_normal, lightdir), 0.0);
         float bias = 0.001 * tan(acos(nDotL));
         vec3 shadowMapPos = shadowCoord.xyz / shadowCoord.w;

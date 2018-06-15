@@ -4,12 +4,13 @@ Radiance Radiance@LightType(in U@LightType data, int index)
 {
     vec4 lightpos = u_view * vec4(data.world_position.xyz, 1.0);
 	vec4 spotDir =  normalize(u_view * vec4(data.world_direction.xyz, 0.0));
-    vec3 lightdir = normalize(lightpos.xyz - viewspace_position);
+    vec3 lightdir = lightpos.xyz - viewspace_position;
 
      // Attenuation
-     float distance = length(lightpos.xyz - viewspace_position);
+     float distance = length(lightdir);
      float attenuation = 1.0 / (data.attenuation_constant + data.attenuation_linear * distance + 
     					data.attenuation_quadratic * (distance * distance));
+     lightdir = normalize(lightdir);
      float cosSpotAngle = dot(spotDir.xyz, -lightdir);
      float outer = data.outer_cone_angle;
      float inner = data.inner_cone_angle;
@@ -31,14 +32,14 @@ Radiance Radiance@LightType(in U@LightType data, int index)
         bias = clamp(bias, 0.0, 0.01);
         if (distanceFromLight < shadowMapPos.z - bias)
         {
-            attenuation = 0.5;
+            attenuation *= 0.5;
         }
 	}
 #endif
     return Radiance(data.ambient_intensity.xyz,
                     data.diffuse_intensity.xyz,
                     data.specular_intensity.xyz,
-                    lightdir.xyz,
+                    lightdir,
                     spot * attenuation);  
                    
 }

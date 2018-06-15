@@ -86,7 +86,11 @@ layout(location = 4) out vec3 vertex_light_diffuse;
 layout(location = 5) out vec3 vertex_light_specular;
 layout(location = 6) out vec3 vertex_light_ambient;
 
+#endif
+
 @VertexSurface
+
+#ifdef HAS_LIGHTSOURCES
 
 @VertexAddLight
 
@@ -125,5 +129,4 @@ void main()
     LightVertex(vertex, makeSurface(vertex.viewspace_normal));
 #endif
     gl_Position = u_mvp * vertex.local_position;
-
 }

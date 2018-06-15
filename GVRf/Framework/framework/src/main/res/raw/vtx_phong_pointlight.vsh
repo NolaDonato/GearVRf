@@ -20,10 +20,7 @@ void Vertex@LightType(Vertex vertex)
     {
         U@LightType light = @LightType[i];
 
-#if @LightType_MAXQUALITY > 1
-        if (light.quality == 1)
-#endif
-        if (length(vertex.viewspace_position) <= light.radius)
+        if ((light.quality == 1) && (length(vertex.viewspace_position) <= light.radius))
         {
             Radiance r = Radiance@LightType(vertex, light, i);
             Reflected ref = LightPerVertex(r, vertex);

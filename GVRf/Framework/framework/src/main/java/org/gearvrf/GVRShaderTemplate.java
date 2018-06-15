@@ -300,11 +300,10 @@ public class GVRShaderTemplate extends GVRShader
                 definedNames.put(name, 1);
                 signature += "$" + name;
                 String attrname = material.getTexCoordAttr(name);
-                if (attrname == null)
+                if ((attrname != null) && !attrname.equals("a_texcoord"))
                 {
-                    attrname = "a_texcoord";
+                    signature += "-" + "#" + attrname + "#";
                 }
-                signature += "-" +"#"+ attrname+ "#";
             }
         }
         return signature;

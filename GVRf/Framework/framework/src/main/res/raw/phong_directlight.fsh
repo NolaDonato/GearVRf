@@ -1,13 +1,33 @@
 
 Radiance Radiance@LightType(in U@LightType data, int index)
 {
-    vec4 L = u_view * vec4(data.world_direction.xyz, 0.0);
+    vec4 lightdir = normalize(u_view * vec4(data.world_direction.xyz, 0.0));
+    float shadow = 1.0;
 
+#ifdef HAS_SHADOWS
+    vec4 shadowCoord = @LightType_shadow_position[index];
+    if ((data.shadow_map_index >= 0) && (shadowCoord.w > 0.0))
+    {
+        float nDotL = max(dot(vertex.viewspace_normal, lightdir), 0.0);
+        float bias = 0.001 * tan(acos(nDotL));
+        vec3 shadowMapPos = shadowCoord.xyz / shadowCoord.w;
+        float shadow_index = float(data.shadow_map_index);
+        vec3 texcoord = vec3(shadowMapPos.x, shadowMapPos.y, shadow_index);
+        vec4 depth = texture(u_shadow_maps, texcoord);
+        float distanceFromLight = unpackFloatFromVec4i(depth);
+
+        bias = clamp(bias, 0.0, 0.01);
+        if (distanceFromLight < shadowMapPos.z - bias)
+        {
+            shadow = 0.5;
+        }
+    }
+#endif
 	return Radiance(data.ambient_intensity.xyz,
 					data.diffuse_intensity.xyz,
 					data.specular_intensity.xyz,
-					normalize(-L.xyz),
-					1.0);
+					-lightdir.xyz,
+					shadow);
 }
 
 void Fragment@LightType(Surface s)
