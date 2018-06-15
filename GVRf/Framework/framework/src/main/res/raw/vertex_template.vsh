@@ -125,7 +125,7 @@ void main()
     vertex_light_diffuse = vec3(0);
     vertex_light_specular = vec3(0);
     vertex_light_ambient = vec3(0);
-    LightVertex(vertex, makeSurface(vertex.viewspace_normal));
+    LightVertex(vertex);
 #endif
     gl_Position = u_mvp * vertex.local_position;
 }
