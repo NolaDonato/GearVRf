@@ -615,7 +615,7 @@ class   GVRJassimpAdapter {
         EnumSet<GVRImportSettings> settings = assetRequest.getImportSettings();
         GVRMesh mesh = createMesh(mContext, aiMesh, settings);
         AiMaterial material = mScene.getMaterials().get(aiMesh.getMaterialIndex());
-        final GVRMaterial meshMaterial = createMaterial(material, assetRequest.getImportSettings());
+        final GVRMaterial meshMaterial = createMaterial(material, assetRequest);
         GVRSceneObject sceneObject = createSceneObject(mContext, node);
         GVRRenderData sceneObjectRenderData = new GVRRenderData(mContext);
         AiColor diffuseColor = material.getDiffuseColor(sWrapperProvider);        /* Opacity */
@@ -726,11 +726,11 @@ class   GVRJassimpAdapter {
         filterMap.put(GLES20.GL_LINEAR_MIPMAP_LINEAR, GVRTextureParameters.TextureFilterType.GL_LINEAR_MIPMAP_LINEAR);
     }
 
-    private GVRMaterial createMaterial(AiMaterial material, EnumSet<GVRImportSettings> settings)
+    private GVRMaterial createMaterial(AiMaterial material, GVRAssetLoader.AssetRequest assetRequest)
     {
         boolean layered = false;
         GVRShaderId shaderType;
-
+        EnumSet<GVRImportSettings> settings = assetRequest.getImportSettings();
         for (final AiTextureType texType : AiTextureType.values())
         {
             if (texType != AiTextureType.UNKNOWN)
@@ -750,7 +750,7 @@ class   GVRJassimpAdapter {
                 GVRMaterial m = new GVRMaterial(mContext, shaderType);
 
                 //use specular glossiness workflow, if present
-                if(glosspresent)
+                if (glosspresent)
                 {
                     AiColor diffuseFactor = material.getDiffuseColor(sWrapperProvider);
                     AiColor specularFactor = material.getSpecularColor(sWrapperProvider);
@@ -761,7 +761,8 @@ class   GVRJassimpAdapter {
                     m.setSpecularColor(specularFactor.getRed(), specularFactor.getGreen(), specularFactor.getBlue(), specularFactor.getAlpha());
                     m.setFloat("glossinessFactor", glossinessFactor);
                 }
-                else {
+                else
+                {
                     float metallic = material.getMetallic();
                     float roughness = material.getRoughness();
                     AiColor baseColorFactor = material.getDiffuseColor(sWrapperProvider);
@@ -770,12 +771,11 @@ class   GVRJassimpAdapter {
                     m.setFloat("metallic", metallic);
                     m.setDiffuseColor(baseColorFactor.getRed(), baseColorFactor.getGreen(), baseColorFactor.getBlue(), baseColorFactor.getAlpha());
                 }
-
-                Bitmap bitmap = BitmapFactory.decodeResource(
-                        mContext.getContext().getResources(), R.drawable.brdflookup);
+                GVRResourceVolume volume = new GVRResourceVolume(mContext, "brdflookup.png");
                 GVRTexture brdfLUTtex = new GVRTexture(mContext);
-                brdfLUTtex.setImage(new GVRBitmapImage(mContext, bitmap));
+
                 m.setTexture("brdfLUTTexture", brdfLUTtex);
+                assetRequest.loadTexture(volume, brdfLUTtex);
                 return m;
             }
             catch (IllegalArgumentException e)

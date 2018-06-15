@@ -152,6 +152,32 @@ public final class GVRAssetLoader {
 
         /**
          * Load a texture asynchronously with a callback.
+         * @param volume GVRResourceVolume to open the resource from.
+         *               Use this to load a texture that is not part
+         *               of the asset (i.e. it comes from a resource)
+         */
+        public void loadTexture(GVRResourceVolume volume, GVRTexture tex)
+        {
+            synchronized (mNumTextures)
+            {
+                String fname = volume.getFileName();
+                Log.d(TAG, "ASSET: loadTexture %s", fname);
+                try
+                {
+                    GVRAndroidResource resource = volume.openResource(fname);
+                    GVRAsynchronousResourceLoader.loadTexture(mContext, mCacheEnabled ? mTextureCache : null,
+                            tex, resource, DEFAULT_PRIORITY, GVRCompressedImage.BALANCED);
+                }
+                catch (IOException ex)
+                {
+                    onTextureError(mContext, ex.getMessage(), fname);
+                }
+            }
+        }
+
+
+        /**
+         * Load a texture asynchronously with a callback.
          * @param request callback that indicates which texture to load
          */
         public void loadTexture(TextureRequest request)
