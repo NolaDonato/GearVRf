@@ -75,7 +75,6 @@ Surface @ShaderName()
 #ifdef HAS_ambientTexture
 	ambient *= texture(ambientTexture, ambient_coord.xy);
 #endif
-
 #ifdef HAS_diffuseTexture
 	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
 #endif
@@ -87,7 +86,7 @@ Surface @ShaderName()
 #ifdef HAS_opacityTexture
 	diffuse.a *= texture(opacityTexture, opacity_coord.xy).a;
 #endif
-diffuse.xyz *= diffuse.a;
+    diffuse.xyz *= diffuse.a;
 
 #ifdef HAS_specularTexture
 	specular *= texture(specularTexture, specular_coord.xy);
@@ -130,6 +129,6 @@ vec4 PixelColor(Surface s)
 #else
 vec4 PixelColor(Surface s)
 {
-    return s.emission;
+    return s.diffuse;
 }
 #endif
