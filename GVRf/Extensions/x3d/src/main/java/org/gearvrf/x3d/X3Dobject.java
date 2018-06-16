@@ -3934,8 +3934,8 @@ public class X3Dobject {
                                 gvrMaterial.setTexture("diffuseTexture1", shaderSettings.getMultiTextureGVRTexture(1) );
                                 // 0:Mul; 1=for ADD; 2 for SUBTRACT; 3 for DIVIDE; 4=smooth add; 5=Signed add
                                 gvrMaterial.setInt("diffuseTexture1_blendop", shaderSettings.getMultiTextureMode().ordinal());
-                                gvrMaterial.setTexCoord("diffuseTexture", "a_texcoord", "diffuse_coord");
-                                gvrMaterial.setTexCoord("diffuseTexture1", "a_texcoord", "diffuse_coord1");
+                                gvrMaterial.setTexCoord("diffuseTexture", "tex_coord0", "diffuse_coord0");
+                                gvrMaterial.setTexCoord("diffuseTexture1", "tex_coord0", "diffuse_coord1");
 
                             }
                             else if (shaderSettings.texture != null) {

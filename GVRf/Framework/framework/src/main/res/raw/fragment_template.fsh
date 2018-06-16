@@ -13,8 +13,6 @@ precision lowp int;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) in vec3 viewspace_normal;
-layout(location = 10) in vec2 diffuse_coord;
-
 
 #ifdef HAS_LIGHTSOURCES
 layout(location = 2) in vec3 view_direction;

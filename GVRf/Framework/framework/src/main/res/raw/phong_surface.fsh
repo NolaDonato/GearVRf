@@ -3,27 +3,22 @@
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_ambientTexture
-layout(location = 11) in vec2 ambient_coord;
 layout(set = 0, binding = 11) uniform sampler2D ambientTexture;
 #endif
 
 #ifdef HAS_specularTexture
-layout(location = 12) in vec2 specular_coord;
 layout(set = 0, binding = 12) uniform sampler2D specularTexture;
 #endif
 
 #ifdef HAS_emissiveTexture
-layout(location = 13) in vec2 emissive_coord;
 layout(set = 0, binding = 13) uniform sampler2D emissiveTexture;
 #endif
 
 #ifdef HAS_lightmapTexture
-layout(location = 14) in vec2 lightmap_coord;
 layout(set = 0, binding = 14) uniform sampler2D lightmapTexture;
 #endif
 
 #ifdef HAS_opacityTexture
-layout(location = 15) in vec2 opacity_coord;
 layout(set = 0, binding = 15) uniform sampler2D opacityTexture;
 #endif
 
@@ -32,8 +27,8 @@ layout(set = 0, binding = 15) uniform sampler2D opacityTexture;
 layout(location = 7) in mat3 tangent_matrix;
 #endif
 
-layout(location = 16) in vec2 normal_coord;
 layout(set = 0, binding = 16) uniform sampler2D normalTexture;
+layout(location = 10) in vec2 tex_coord0;
 
 mat3 calculateTangentMatrix()
 {
@@ -42,8 +37,8 @@ mat3 calculateTangentMatrix()
 #else
     vec3 pos_dx = dFdx(viewspace_position);
     vec3 pos_dy = dFdy(viewspace_position);
-    vec3 tex_dx = dFdx(vec3(normal_coord, 0.0));
-    vec3 tex_dy = dFdy(vec3(normal_coord, 0.0));
+    vec3 tex_dx = dFdx(vec3(normal_coord0, 0.0));
+    vec3 tex_dy = dFdy(vec3(normal_coord0, 0.0));
 
     vec3 dp2perp = cross(pos_dy, viewspace_normal);
     vec3 dp1perp = cross(viewspace_normal, pos_dx);
@@ -64,8 +59,8 @@ mat3 calculateTangentMatrix()
 #else
     vec3 pos_dx = dFdx(viewspace_position);
     vec3 pos_dy = dFdy(viewspace_position);
-    vec3 tex_dx = dFdx(vec3(normal_coord, 0.0));
-    vec3 tex_dy = dFdy(vec3(normal_coord, 0.0));
+    vec3 tex_dx = dFdx(vec3(normal_coord0, 0.0));
+    vec3 tex_dy = dFdy(vec3(normal_coord0, 0.0));
 
     vec3 dp2perp = cross(pos_dy, viewspace_normal);
     vec3 dp1perp = cross(viewspace_normal, pos_dx);
@@ -86,30 +81,30 @@ Surface @ShaderName()
 	vec3 viewspaceNormal;
 
 #ifdef HAS_ambientTexture
-	ambient *= texture(ambientTexture, ambient_coord.xy);
+	ambient *= texture(ambientTexture, ambient_coord0.xy);
 #endif
 #ifdef HAS_diffuseTexture
-	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
+	diffuse *= texture(diffuseTexture, diffuse_coord0.xy);
 #endif
 #ifdef HAS_opacityTexture
-	diffuse.w *= texture(opacityTexture, opacity_coord.xy).a;
+	diffuse.w *= texture(opacityTexture, opacity_coord0.xy).a;
 #endif
     diffuse.xyz *= diffuse.w;
 #ifdef HAS_specularTexture
-	specular *= texture(specularTexture, specular_coord.xy);
+	specular *= texture(specularTexture, specular_coord0.xy);
 #endif
 #ifdef HAS_emissiveTexture
-	emission = texture(emissiveTexture, emissive_coord.xy);
+	emission = texture(emissiveTexture, emissive_coord0.xy);
 #endif
 #ifdef HAS_normalTexture
     mat3 tbn = calculateTangentMatrix();
-	viewspaceNormal = normalize(texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0);
+	viewspaceNormal = normalize(texture(normalTexture, normal_coord0.xy).xyz * 2.0 - 1.0);
 	viewspaceNormal = normalize(tbn * viewspaceNormal);
 #else
 	viewspaceNormal = viewspace_normal;
 #endif
 #ifdef HAS_lightmapTexture
-	vec2 lmap_coord = (lightmap_coord * lightmap_scale) + lightmap_offset;
+	vec2 lmap_coord = (lightmap_coord0 * lightmap_scale) + lightmap_offset;
 	diffuse *= texture(lightmapTexture, vec2(lmap_coord.x, 1 - lmap_coord.y);
 	return Surface(viewspaceNormal, ambient, vec4(0.0, 0.0, 0.0, 0.0), specular, diffuse);
 #else

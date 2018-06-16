@@ -438,15 +438,7 @@ public class GVRShaderTemplate extends GVRShader
         combinedSource = combinedSource.replace("@LIGHTSOURCES", lightShaderSource);
         combinedSource = combinedSource.replace("@MATERIAL_UNIFORMS", material.makeShaderLayout());
         combinedSource = combinedSource.replace("@BONES_UNIFORMS", GVRShaderManager.makeLayout(sBonesDescriptor, "Bones_ubo", true));
-        if (type.equals("Vertex"))
-        {
-            String texcoordSource = assignTexcoords(material);
-            if (texcoordSource.length() > 0)
-            {
-                shaderSource.append("#define HAS_TEXCOORDS 1\n");
-            }
-            combinedSource = combinedSource.replace("@TEXCOORDS", texcoordSource);
-        }
+        combinedSource = assignTexcoords(material, combinedSource);
         for (Map.Entry<String, Integer> entry : definedNames.entrySet())
         {
             if (entry.getValue() != 0)
@@ -462,20 +454,24 @@ public class GVRShaderTemplate extends GVRShader
      * @param mtl GVRMaterial being used with this shader.
      * @return shader code to assign texture coordinates
      */
-    private String assignTexcoords(GVRShaderData mtl)
+    private String assignTexcoords(GVRShaderData mtl, String shaderSource)
     {
         Set<String> texnames = mtl.getTextureNames();
-        String shadercode = "";
         for (String name : texnames)
         {
             String texCoordAttr = mtl.getTexCoordAttr(name);
             String shaderVar = mtl.getTexCoordShaderVar(name);
-            if (texCoordAttr != null)
+            if (shaderVar == null)
             {
-                shadercode += "    " + shaderVar + " = " + texCoordAttr + ";\n";
+                shaderVar = "diffuse_coord0";
             }
+            if (texCoordAttr == null)
+            {
+                texCoordAttr = "tex_coord0";
+            }
+            shaderSource = shaderSource.replace(shaderVar, texCoordAttr);
         }
-        return shadercode;
+        return shaderSource;
     }
 
     /**

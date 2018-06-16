@@ -15,21 +15,16 @@
 #endif
 
 #ifdef HAS_a_texcoord
-//
-// Default to using the first set of texture coordinates
-// for all components. The shader generation process
-// will add assignments after these if multi-texturing
-// has been requested by the material using this shader.
-//
-   diffuse_coord = a_texcoord.xy;
-   opacity_coord = a_texcoord.xy;
-   specular_coord = a_texcoord.xy;
-   ambient_coord = a_texcoord.xy;
-#ifdef HAS_normalTexture
-   normal_coord = a_texcoord.xy;
+   tex_coord0 = a_texcoord.xy;
 #endif
-#ifdef HAS_lightmapTexture
-   lightmap_coord = a_texcoord.xy;
+#ifdef HAS_a_texcoord1
+    tex_coord1 = a_texcoord1.xy;
 #endif
+#ifdef HAS_a_texcoord2
+    tex_coord2 = a_texcoord2.xy;
 #endif
+#ifdef HAS_a_texcoord3
+    tex_coord3 = a_texcoord3.xy;
+#endif
+
 

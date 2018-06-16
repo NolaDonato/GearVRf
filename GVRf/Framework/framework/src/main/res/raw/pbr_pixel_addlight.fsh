@@ -108,7 +108,7 @@ Reflected LightPerPixel(Radiance r, Surface s)
 #endif
     vec3 color = diffuse + specular + s.emission.rgb;
 #ifdef HAS_lightmapTexture
-    float ao = texture(lightmapTexture, lightmap_coord).r;
+    float ao = texture(lightmapTexture, lightmap_coord0).r;
     color = mix(color, color * ao, lightmapStrength);
 #endif
     color = pow(color, vec3(1.0 / 2.2));

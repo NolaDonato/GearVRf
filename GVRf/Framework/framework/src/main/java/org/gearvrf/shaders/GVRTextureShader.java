@@ -52,7 +52,7 @@ public class GVRTextureShader extends GVRShaderTemplate
             fragTemplate = TextFile.readTextFile(context, R.raw.fragment_template);
             vtxTemplate = TextFile.readTextFile(context, R.raw.vertex_template);
             surfaceShader = TextFile.readTextFile(context, R.raw.texture_surface);
-            vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_tex);
+            vtxShader = TextFile.readTextFile(context, R.raw.pos_norm_multitex);
             surfaceDef = TextFile.readTextFile(context, R.raw.phong_surface_def);
             addPixelLight = TextFile.readTextFile(context, R.raw.phong_pixel_addlight);
             addVertexLight = TextFile.readTextFile(context, R.raw.phong_vertex_addlight);

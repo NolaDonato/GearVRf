@@ -1,3 +1,5 @@
+layout(location = 10) in vec2 tex_coord0;
+
 #ifdef HAS_diffuseTexture
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 #else
@@ -11,10 +13,10 @@ Surface @ShaderName()
     diffuse *= diffuse_color;
 #endif
 #ifdef HAS_diffuseTexture
-    diffuse *= texture(diffuseTexture, diffuse_coord.xy);
+    diffuse *= texture(diffuseTexture, diffuse_coord0.xy);
 #else
 #ifdef HAS_u_texture
-    diffuse *= texture(u_texture, diffuse_coord.xy);
+    diffuse *= texture(u_texture, diffuse_coord0.xy);
 #endif
 #endif
     float opacity = diffuse.w;

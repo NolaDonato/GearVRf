@@ -802,20 +802,18 @@ class   GVRJassimpAdapter {
         int blendop = aimtl.getTextureOp(texType, texIndex).ordinal();
         String typeName = textureMap.get(texType);
         String textureKey = typeName + "Texture";
-        String texCoordKey = "a_texcoord";
+        String texCoordKey = "tex_coord";
         String shaderKey = typeName + "_coord";
         final String texFileName = aimtl.getTextureFile(texType, texIndex);
         final boolean usingPBR = (gvrmtl.getShaderType() == mContext.getShaderManager().getShaderType(GVRPBRShader.class));
 
-        if (uvIndex > 0)
-        {
-            texCoordKey += uvIndex;
-        }
         if (texIndex > 1)
         {
             assetRequest.onModelError(mContext, "Layering only supported for two textures, ignoring " + texFileName, mFileName);
             return;
         }
+        texCoordKey += uvIndex;
+        shaderKey += texIndex;
         if (texIndex > 0)
         {
             if (usingPBR)
@@ -823,7 +821,6 @@ class   GVRJassimpAdapter {
                 return;
             }
             textureKey += texIndex;
-            shaderKey += texIndex;
             gvrmtl.setInt(textureKey + "_blendop", blendop);
         }
         GVRTextureParameters texParams = new GVRTextureParameters(mContext);

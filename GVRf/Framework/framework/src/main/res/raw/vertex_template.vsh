@@ -53,18 +53,10 @@ layout(location = 7) out mat3 tangent_matrix;
 #endif
 #endif
 
-layout(location = 10) out vec2 diffuse_coord;
-layout(location = 11) out vec2 ambient_coord;
-layout(location = 12) out vec2 specular_coord;
-layout(location = 13) out vec2 emissive_coord;
-layout(location = 14) out vec2 lightmap_coord;
-layout(location = 15) out vec2 opacity_coord;
-layout(location = 16) out vec2 normal_coord;
-
-layout(location = 17) out vec2 diffuse_coord1;
-layout(location = 18) out vec2 ambient_coord1;
-layout(location = 19) out vec2 specular_coord1;
-layout(location = 20) out vec2 emissive_coord1;
+layout(location = 10) out vec2 tex_coord0;
+layout(location = 11) out vec2 tex_coord1;
+layout(location = 12) out vec2 tex_coord2;
+layout(location = 13) out vec2 tex_coord3;
 
 struct Vertex
 {
@@ -114,9 +106,6 @@ void main()
 @VertexNormalShader
 #endif
 
-#ifdef HAS_TEXCOORDS
-@TEXCOORDS
-#endif
 
     viewspace_normal = vertex.viewspace_normal;
 #ifdef HAS_LIGHTSOURCES

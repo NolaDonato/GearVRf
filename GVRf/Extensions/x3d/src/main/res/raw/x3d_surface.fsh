@@ -1,9 +1,11 @@
-
+layout(location = 10) in vec2 tex_coord0;
+layout(location = 11) in vec2 tex_coord1;
+layout(location = 12) in vec2 tex_coord2;
+layout(location = 13) in vec2 tex_coord3;
 
 layout(set = 0, binding = 10) uniform sampler2D diffuseTexture;
 
 #ifdef HAS_diffuseTexture1
-layout(location = 17) in vec2 diffuse_coord1;
 layout(set = 0, binding = 17) uniform sampler2D diffuseTexture1;
 #endif
 
@@ -73,10 +75,10 @@ Surface @ShaderName()
     diffuse = emission;
 #endif
 #ifdef HAS_ambientTexture
-	ambient *= texture(ambientTexture, ambient_coord.xy);
+	ambient *= texture(ambientTexture, ambient_coord0.xy);
 #endif
 #ifdef HAS_diffuseTexture
-	diffuse *= texture(diffuseTexture, diffuse_coord.xy);
+	diffuse *= texture(diffuseTexture, diffuse_coord0.xy);
 #endif
 #ifdef HAS_diffuseTexture1_blendop
     temp = texture(diffuseTexture1, diffuse_coord1.xy);
@@ -84,21 +86,21 @@ Surface @ShaderName()
 #endif
 
 #ifdef HAS_opacityTexture
-	diffuse.a *= texture(opacityTexture, opacity_coord.xy).a;
+	diffuse.a *= texture(opacityTexture, opacity_coord0.xy).a;
 #endif
     diffuse.xyz *= diffuse.a;
 
 #ifdef HAS_specularTexture
-	specular *= texture(specularTexture, specular_coord.xy);
+	specular *= texture(specularTexture, specular_coord0.xy);
 #endif
 
 #ifdef HAS_emissiveTexture
-	emission = texture(emissiveTexture, emissive_coord.xy);
+	emission = texture(emissiveTexture, emissive_coord0.xy);
 #endif
 
 #ifdef HAS_normalTexture
     mat3 tbn = calculateTangentMatrix();
-	viewspaceNormal = normalize(texture(normalTexture, normal_coord.xy).xyz * 2.0 - 1.0);
+	viewspaceNormal = normalize(texture(normalTexture, normal_coord0.xy).xyz * 2.0 - 1.0);
 	viewspaceNormal = normalize(tbn * viewspaceNormal);
 #else
 	viewspaceNormal = viewspace_normal;
