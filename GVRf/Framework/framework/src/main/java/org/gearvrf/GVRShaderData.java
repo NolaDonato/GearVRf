@@ -50,8 +50,6 @@ public class GVRShaderData extends GVRHybridObject
     private static final String TAG = Log.tag(GVRShaderData.class);
 
     protected GVRShaderId mShaderId;
-    protected String mUniformDescriptor = null;
-    protected String mTextureDescriptor = null;
 
     final protected Map<String, GVRTexture> textures = new HashMap();
 
@@ -76,8 +74,6 @@ public class GVRShaderData extends GVRHybridObject
         GVRShader shader = shaderId.getTemplate(gvrContext);
         GVRShaderManager shaderManager = gvrContext.getShaderManager();
         mShaderId = shaderManager.getShaderType(shaderId.ID);
-        mUniformDescriptor = shader.getUniformDescriptor();
-        mTextureDescriptor = shader.getTextureDescriptor();
         shader.setMaterialDefaults(this);
     }
 
@@ -98,8 +94,6 @@ public class GVRShaderData extends GVRHybridObject
         GVRShader shader = shaderId.getTemplate(src.getGVRContext());
         GVRShaderManager shaderManager = src.getGVRContext().getShaderManager();
         mShaderId = shaderManager.getShaderType(shaderId.ID);
-        mUniformDescriptor = shader.getUniformDescriptor();
-        mTextureDescriptor = shader.getTextureDescriptor();
         shader.setMaterialDefaults(this);
         NativeShaderData.copyUniforms(getNative(), src.getNative());
         for (Map.Entry<String, GVRTexture> e : src.textures.entrySet())
@@ -117,9 +111,17 @@ public class GVRShaderData extends GVRHybridObject
         GVRShader shader = shaderId.getTemplate(gvrContext);
         GVRShaderManager shaderManager = gvrContext.getShaderManager();
         mShaderId = shaderManager.getShaderType(shaderId.ID);
-        mUniformDescriptor = shader.getUniformDescriptor();
-        mTextureDescriptor = shader.getTextureDescriptor();
         shader.setMaterialDefaults(this);
+    }
+
+    /**
+     * Construct a GVRShaderData from a C++ ShaderData object
+     * @param gvrContext        GVRContext to use for shader data
+     * @param nativeShaderData  -> C++ ShaderData object
+     */
+    protected GVRShaderData(GVRContext gvrContext, long nativeShaderData)
+    {
+        super(gvrContext, NativeShaderData.ctorNative(nativeShaderData));
     }
 
     /**
@@ -129,6 +131,22 @@ public class GVRShaderData extends GVRHybridObject
     public GVRShaderId getShaderType()
     {
         return mShaderId;
+    }
+
+    private boolean setShaderClass(String shaderClassName)
+    {
+        try
+        {
+            Class<? extends GVRShader> shaderClass = (Class<? extends GVRShader>) Class.forName(shaderClassName);
+            mShaderId = new GVRShaderId(shaderClass);
+        }
+        catch (ClassNotFoundException ex)
+        {
+            return false;
+        }
+        GVRShader shader = mShaderId.getTemplate(getGVRContext());
+        shader.setMaterialDefaults(this);
+        return true;
     }
 
     /**
@@ -147,7 +165,7 @@ public class GVRShaderData extends GVRHybridObject
      * </ull>
      * @return string with uniform descriptor from shader
      */
-    public String getUniformDescriptor() { return mUniformDescriptor; }
+    public String getUniformDescriptor() { return NativeShaderData.getUniformDescriptor(getNative()); }
 
     /**
      * Gets the string describing the textures allowed in this material.
@@ -157,7 +175,7 @@ public class GVRShaderData extends GVRHybridObject
      * </p>
      * @return string with texture descriptor from shader
      */
-    public String getTextureDescriptor() { return mTextureDescriptor; }
+    public String getTextureDescriptor() { return NativeShaderData.getTextureDescriptor(getNative()); }
 
     /**
      * Determine whether a named uniform has been set in this material.
@@ -224,6 +242,11 @@ public class GVRShaderData extends GVRHybridObject
         }
     }
 
+    private void setTextureNative(String key, long nativeTexturePtr, long nativeBitmapPtr)
+    {
+        GVRTexture texture = new GVRTexture(getGVRContext(), nativeTexturePtr, nativeBitmapPtr);
+        textures.put(key, texture);
+    }
 
     /**
      * Get the {@code float} bound to the shader uniform {@code key}.
@@ -245,7 +268,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setFloat(String key, float value)
     {
-        checkKeyIsUniform(key);
         checkFloatNotNaNOrInfinity("value", value);
         NativeShaderData.setFloat(getNative(), key, value);
     }
@@ -269,7 +291,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setInt(String key, int value)
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setInt(getNative(), key, value);
     }
 
@@ -282,8 +303,7 @@ public class GVRShaderData extends GVRHybridObject
     public float[] getFloatVec(String key)
     {
         float[] vec = NativeShaderData.getFloatVec(getNative(), key);
-        if (vec == null)
-            throw new IllegalArgumentException("key " + key + " not found in material");
+        checkAttrAndValue(key, vec);
         return vec;
     }
 
@@ -296,8 +316,7 @@ public class GVRShaderData extends GVRHybridObject
     public int[] getIntVec(String key)
     {
         int[] vec = NativeShaderData.getIntVec(getNative(), key);
-        if (vec == null)
-            throw new IllegalArgumentException("key " + key + " not found in material");
+        checkAttrAndValue(key, vec);
         return vec;
     }
 
@@ -322,7 +341,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setVec2(String key, float x, float y)
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setVec2(getNative(), key, x, y);
     }
 
@@ -334,7 +352,9 @@ public class GVRShaderData extends GVRHybridObject
      */
     public float[] getVec3(String key)
     {
-        return getFloatVec(key);
+        float[] vec = getFloatVec(key);
+        checkAttrAndValue(key, vec);
+        return vec;
     }
 
     /**
@@ -348,7 +368,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setVec3(String key, float x, float y, float z)
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setVec3(getNative(), key, x, y, z);
     }
 
@@ -360,7 +379,9 @@ public class GVRShaderData extends GVRHybridObject
      */
     public float[] getVec4(String key)
     {
-        return getFloatVec(key);
+        float[] vec =  getFloatVec(key);
+        checkAttrAndValue(key, vec);
+        return vec;
     }
 
     /**
@@ -375,7 +396,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setVec4(String key, float x, float y, float z, float w)
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setVec4(getNative(), key, x, y, z, w);
     }
 
@@ -387,8 +407,9 @@ public class GVRShaderData extends GVRHybridObject
      */
     public float[] getMat4(String key)
     {
-        checkKeyIsUniform(key);
-        return NativeShaderData.getMat4(getNative(), key);
+        float[] arr = NativeShaderData.getMat4(getNative(), key);
+        checkAttrAndValue(key, arr);
+        return arr;
     }
 
     /**
@@ -400,7 +421,6 @@ public class GVRShaderData extends GVRHybridObject
                         float x2, float y2, float z2, float w2, float x3, float y3,
                         float z3, float w3, float x4, float y4, float z4, float w4)
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setMat4(getNative(), key, x1, y1, z1, w1, x2, y2,
                                  z2, w2, x3, y3, z3, w3, x4, y4, z4, w4);
     }
@@ -416,7 +436,6 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setFloatArray(String key, float val[])
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setFloatVec(getNative(), key, val, val.length);
     }
 
@@ -431,25 +450,14 @@ public class GVRShaderData extends GVRHybridObject
      */
     public void setIntArray(String key, int val[])
     {
-        checkKeyIsUniform(key);
         NativeShaderData.setIntVec(getNative(), key, val, val.length);
     }
 
-    private void checkKeyIsTexture(String key)
+    private void checkAttrAndValue(String key, Object value)
     {
-        checkStringNotNullOrEmpty("key", key);
-        if (!mTextureDescriptor.contains(key))
+        if ((key == null)  || (value == null))
         {
-            throw Exceptions.IllegalArgument("key " + key + " not in material");
-        }
-    }
-
-    private void checkKeyIsUniform(String key)
-    {
-        checkStringNotNullOrEmpty("key", key);
-        if (!mUniformDescriptor.contains(key))
-        {
-            throw Exceptions.IllegalArgument("key " + key + " not in material");
+            throw Exceptions.IllegalArgument("Attribute '" + key + " ' not found in material");
         }
     }
 
@@ -528,6 +536,9 @@ public class GVRShaderData extends GVRHybridObject
 
 class NativeShaderData {
     static native long ctor(String uniformDesc, String textureDesc);
+
+    static native long ctorNative(long nativeShaderData);
+
     static native void useGpuBuffer(long shaderData, boolean flag);
 
     static native boolean hasUniform(long shaderData, String key);
@@ -570,4 +581,8 @@ class NativeShaderData {
     static native String makeShaderLayout(long shaderData);
 
     static native boolean copyUniforms(long shaderDataDest, long shaderDataSrc);
+
+    static native String getUniformDescriptor(long shaderData);
+
+    static native String getTextureDescriptor(long shaderData);
 }

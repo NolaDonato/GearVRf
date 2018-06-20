@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include "scene_object.h"
-
+#include "light.h"
 #include "util/gvr_log.h"
 #include "util/gvr_jni.h"
 
@@ -27,6 +27,10 @@ extern "C" {
     JNIEXPORT jlong JNICALL
     Java_org_gearvrf_NativeSceneObject_ctor(JNIEnv * env,
             jobject obj);
+
+    JNIEXPORT jlong JNICALL
+    Java_org_gearvrf_NativeSceneObject_ctorNative(JNIEnv * env, jobject obj, long nativeSceneObject, jobject jContext);
+
     JNIEXPORT jstring JNICALL
     Java_org_gearvrf_NativeSceneObject_getName(JNIEnv * env,
             jobject obj, jlong jscene_object);
@@ -90,13 +94,60 @@ extern "C" {
 } // extern "C"
 
 JNIEXPORT jlong JNICALL
-Java_org_gearvrf_NativeSceneObject_ctor(JNIEnv * env,
-        jobject obj) {
+Java_org_gearvrf_NativeSceneObject_ctor(JNIEnv* env, jobject obj) {
     return reinterpret_cast<jlong>(new SceneObject());
 }
 
+static jclass getComponentClass(JNIEnv* env, Component* component)
+{
+    char className[128];
+    char* simpleName = &className[12];
+
+    strcpy(className, "org/gearvrf/");
+    switch (component->getType())
+    {
+        case COMPONENT_TYPE_TRANSFORM:   strcpy(simpleName, "GVRTransform"); break;
+        case COMPONENT_TYPE_LIGHT:       strcpy(simpleName, ((Light*) component)->getLightClass()); break;
+        case COMPONENT_TYPE_BONE:        strcpy(simpleName, "GVRBone"); break;
+        case COMPONENT_TYPE_CAMERA:      strcpy(simpleName, "GVRPerspectiveCamera"); break;
+        case COMPONENT_TYPE_RENDER_DATA: strcpy(simpleName, "GVRRenderData"); break;
+        default: return NULL;
+    }
+    return env->FindClass(className);
+}
+
+JNIEXPORT jlong JNICALL
+Java_org_gearvrf_NativeSceneObject_ctorNative(JNIEnv* env, jobject jSceneObject, long nativeSceneObject, jobject jContext)
+{
+    SceneObject* sceneObject = reinterpret_cast<SceneObject*>(nativeSceneObject);
+    jclass sceneObjectClass = env->GetObjectClass(jSceneObject);
+    jmethodID addComponentMethod = env->GetMethodID(sceneObjectClass, "attachComponentNative", "(Lorg/gearvrf/GVRComponent)Z");
+    jmethodID addChildMethod = env->GetMethodID(sceneObjectClass, "addChildNative", "(J)Z");
+
+    std::vector<Component*> components;
+    sceneObject->getAllComponents(components, 0);
+    for (auto it = components.begin(); it != components.end(); ++it)
+    {
+        Component* component = *it;
+        jclass componentClass = getComponentClass(env, component);
+        jmethodID componentCtor = env->GetMethodID(componentClass, "<init>", "(Lorg/gearvrf/GVRContext;J)V");
+        jobject jcomponent = env->CallObjectMethod(jSceneObject, componentCtor, jContext, component);
+
+        env->CallBooleanMethod(jSceneObject, addComponentMethod, jcomponent);
+        env->DeleteLocalRef(componentClass);
+        env->DeleteLocalRef(jcomponent);
+    }
+    for (int i = 0; i < sceneObject->getChildrenCount(); ++i)
+    {
+        SceneObject* child = sceneObject->getChildByIndex(i);
+        env->CallVoidMethod(jSceneObject, addChildMethod, child);
+    }
+    env->DeleteLocalRef(sceneObjectClass);
+}
+
+
 JNIEXPORT jstring JNICALL
-Java_org_gearvrf_NativeSceneObject_getName(JNIEnv * env,
+Java_org_gearvrf_NativeSceneObject_getName(JNIEnv* env,
         jobject obj, jlong jscene_object) {
     SceneObject* scene_object = reinterpret_cast<SceneObject*>(jscene_object);
     std::string name = scene_object->name();

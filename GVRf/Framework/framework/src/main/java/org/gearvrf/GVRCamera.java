@@ -57,7 +57,6 @@ public abstract class GVRCamera extends GVRComponent implements PrettyPrint {
         setOwnerObject(owner);
     }
 
-
     static public long getComponentType() {
         return NativeCamera.getComponentType();
     }

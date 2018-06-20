@@ -51,6 +51,7 @@ void Scene::set_java(JavaVM* javaVM, jobject javaScene)
     {
         jclass sceneClass = env->GetObjectClass(javaScene);
         makeDepthShadersMethod_ = env->GetMethodID(sceneClass, "makeDepthShaders", "()V");
+        env->DeleteLocalRef(sceneClass);
         if (makeDepthShadersMethod_ == 0)
         {
             LOGE("Scene::set_java ERROR cannot find 'GVRScene.makeDepthShaders()' Java method");

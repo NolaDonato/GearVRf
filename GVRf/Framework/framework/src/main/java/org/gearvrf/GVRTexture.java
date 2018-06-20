@@ -85,10 +85,10 @@ public class GVRTexture extends GVRHybridObject implements GVRAndroidResource.Te
         mTextureId = 0;
     }
 
-    protected GVRTexture(GVRContext gvrContext, long ptr)
+    GVRTexture(GVRContext gvrContext, long nativeTexture, long nativeBitmapPtr)
     {
-        super(gvrContext, ptr);
-        mImage = null;
+        super(gvrContext, nativeTexture);
+        mImage = new GVRBitmapImage(getGVRContext(), nativeBitmapPtr);
         mLock = new ReentrantLock();
         mTextureParams = null;
         mTextureId = 0;

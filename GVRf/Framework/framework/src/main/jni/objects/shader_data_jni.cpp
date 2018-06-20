@@ -28,6 +28,8 @@ extern "C" {
 JNIEXPORT jlong JNICALL
 Java_org_gearvrf_NativeShaderData_ctor(JNIEnv* env, jobject obj, jstring udesc, jstring tdesc);
 
+JNIEXPORT jlong JNICALL
+Java_org_gearvrf_NativeShaderData_ctorNative(JNIEnv* env, jobject obj, long nativeShaderData);
 
 JNIEXPORT void JNICALL
 Java_org_gearvrf_NativeShaderData_useGpuBuffer(JNIEnv* env,
@@ -118,6 +120,13 @@ JNIEXPORT jboolean JNICALL
 Java_org_gearvrf_NativeShaderData_copyUniforms(JNIEnv* env,
                                              jobject obj, jlong jdest, jlong jsrc);
 
+JNIEXPORT jstring JNICALL
+Java_org_gearvrf_NativeShaderData_getUniformDescriptor(JNIEnv* env, jobject obj, jlong shaderData);
+
+JNIEXPORT jstring JNICALL
+Java_org_gearvrf_NativeShaderData_getTextureDescriptor(JNIEnv* env, jobject obj, jlong shaderData);
+
+
 };
 
 
@@ -127,6 +136,7 @@ Java_org_gearvrf_NativeShaderData_useGpuBuffer(JNIEnv* env,
     ShaderData* shader_data = reinterpret_cast<ShaderData*>(jshader_data);
     shader_data->useGPUBuffer(flag);
 }
+
 JNIEXPORT jlong JNICALL
 Java_org_gearvrf_NativeShaderData_ctor(JNIEnv* env, jobject obj, jstring junidesc, jstring jtexdesc)
 {
@@ -137,6 +147,22 @@ Java_org_gearvrf_NativeShaderData_ctor(JNIEnv* env, jobject obj, jstring junides
     env->ReleaseStringUTFChars(junidesc, uni_desc);
     env->ReleaseStringUTFChars(jtexdesc, tex_desc);
     return reinterpret_cast<jlong>(shaderData);
+}
+
+JNIEXPORT jlong JNICALL
+Java_org_gearvrf_NativeShaderData_ctorNative(JNIEnv* env, jobject jShaderData, long nativeShaderData)
+{
+    ShaderData* shaderData = reinterpret_cast<ShaderData *>(nativeShaderData);
+    jclass shaderDataClass = env->GetObjectClass(jShaderData);
+    jmethodID setTexMethod = env->GetMethodID(shaderDataClass, "setTextureNative", "(Ljava/lang/String;JJ)V");
+    shaderData->forEachTexture([shaderDataClass](const char* texname, Texture *tex) mutable
+    {
+        jstring jkey = env->NewStringUTF(texname);
+        env->CallVoidMethod(jShaderData, setTexMethod, jkey, tex, tex->getImage());
+        env->ReleaseStringUTFChars(jkey, texname);
+    });
+    env->DeleteLocalRef(shaderDataClass);
+    return nativeShaderData;
 }
 
 JNIEXPORT void JNICALL
@@ -375,7 +401,21 @@ Java_org_gearvrf_NativeShaderData_copyUniforms(JNIEnv* env,
     return dest->copyUniforms(src);
 }
 
+JNIEXPORT jstring JNICALL
+Java_org_gearvrf_NativeShaderData_getUniformDescriptor(JNIEnv* env, jobject obj, jlong jshaderData)
+{
+    ShaderData* shader_data = reinterpret_cast<ShaderData*>(jshaderData);
+    const char* desc = shader_data->getUniformDescriptor();
+    return env->NewStringUTF(desc);
+}
 
+JNIEXPORT jstring JNICALL
+Java_org_gearvrf_NativeShaderData_getTextureDescriptor(JNIEnv* env, jobject obj, jlong jshaderData)
+{
+    ShaderData* shader_data = reinterpret_cast<ShaderData*>(jshaderData);
+    const char* desc = shader_data->getTextureDescriptor();
+    return env->NewStringUTF(desc);
+}
 
 }
 

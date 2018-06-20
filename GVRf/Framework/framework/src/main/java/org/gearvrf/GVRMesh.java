@@ -94,6 +94,21 @@ public class GVRMesh extends GVRHybridObject implements PrettyPrint {
         mIndices = ibuffer;
     }
 
+    GVRMesh(GVRContext ctx, long nativePtr)
+    {
+        super(ctx, nativePtr);
+    }
+
+    private void setVertexBuffer(long nativeVertexBuffer)
+    {
+        mVertices = new GVRVertexBuffer(getGVRContext(), nativeVertexBuffer);
+    }
+
+    private void setIndexBuffer(long nativeIndexBuffer)
+    {
+        mIndices = new GVRIndexBuffer(getGVRContext(), nativeIndexBuffer);
+    }
+
     public GVRMesh(final GVRMesh srcMesh)
     {
         this(srcMesh.getVertexBuffer(), srcMesh.getIndexBuffer());

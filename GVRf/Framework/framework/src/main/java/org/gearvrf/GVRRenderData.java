@@ -102,10 +102,15 @@ public final class GVRRenderData extends GVRComponent implements IRenderable, Pr
         NativeRenderData.setBindShaderObject(getNative(), new BindShaderFromNative(this));
 
         GVRRenderPass basePass = new GVRRenderPass(gvrContext);
-        mRenderPassList = new ArrayList<>();
         addPass(basePass);
         isLightEnabled = true;
         mLightMapEnabled = false;
+    }
+
+    public GVRRenderData(GVRContext ctx, long nativePtr)
+    {
+        super(ctx, NativeRenderData.ctorNative(nativePtr));
+        NativeRenderData.setBindShaderObject(nativePtr, new BindShaderFromNative(this));
     }
 
     public GVRRenderData(GVRContext gvrContext, GVRMaterial material) {
@@ -149,15 +154,36 @@ public final class GVRRenderData extends GVRComponent implements IRenderable, Pr
         NativeRenderData.setMesh(getNative(), mesh.getNative());
     }
 
+    private void setMesh(long nativeMesh)
+    {
+        mMesh = new GVRMesh(getGVRContext(), nativeMesh);
+    }
+
     /**
      * Add a render {@link GVRRenderPass pass} to this RenderData.
      * @param pass
      */
     public void addPass(GVRRenderPass pass) {
         GVRMesh mesh = getMesh();
+
+        if (mRenderPassList == null)
+        {
+            mRenderPassList = new ArrayList<>();
+        }
         mRenderPassList.add(pass);
         pass.setMesh(mesh);
         NativeRenderData.addPass(getNative(), pass.getNative());
+    }
+
+    private void addPass(long nativePass)
+    {
+        GVRRenderPass pass = new GVRRenderPass(getGVRContext(), nativePass);
+        if (mRenderPassList == null)
+        {
+            mRenderPassList = new ArrayList<>();
+        }
+        mRenderPassList.add(pass);
+        pass.setMesh(getMesh());
     }
 
     /**
@@ -850,6 +876,8 @@ public final class GVRRenderData extends GVRComponent implements IRenderable, Pr
 
 class NativeRenderData {
     static native long ctor();
+
+    static native long ctorNative(long nativeRenderData);
 
     static native long getComponentType();
 

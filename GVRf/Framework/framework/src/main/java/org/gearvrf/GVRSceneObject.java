@@ -237,6 +237,11 @@ public class GVRSceneObject extends GVRHybridObject implements PrettyPrint, IScr
         this(gvrContext, GVRMesh.createQuad(gvrContext, meshDesc, width, height), material);
     }
 
+    private GVRSceneObject(GVRContext ctx, long nativePtr)
+    {
+        super(ctx, NativeSceneObject.ctorNative(nativePtr));
+    }
+
     /**
      * Constructs a 2D, rectangular scene object that uses the standard
      * {@linkplain Texture 'texture shader'} to display a {@linkplain GVRTexture
@@ -352,6 +357,21 @@ public class GVRSceneObject extends GVRHybridObject implements PrettyPrint, IScr
             if (!mComponents.containsKey(type)) {
                 mComponents.put(type, component);
                 component.setOwnerObject(this);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean attachComponentNative(GVRComponent component)
+    {
+        synchronized (mComponents)
+        {
+            long type = component.getType();
+            if (!mComponents.containsKey(type))
+            {
+                mComponents.put(type, component);
+                component.setNativeOwner(this);
                 return true;
             }
         }
@@ -684,6 +704,14 @@ public class GVRSceneObject extends GVRHybridObject implements PrettyPrint, IScr
         NativeSceneObject.addChildObject(getNative(), child.getNative());
         child.onNewParentObject(this);
         return true;
+    }
+
+    private void addChildNative(long nativeChildPtr)
+    {
+        GVRSceneObject child = new GVRSceneObject(getGVRContext(), nativeChildPtr);
+        mChildren.add(child);
+        child.mParent = this;
+        child.onNewParentObject(this);
     }
 
     /**
@@ -1295,6 +1323,8 @@ public class GVRSceneObject extends GVRHybridObject implements PrettyPrint, IScr
 
 class NativeSceneObject {
     static native long ctor();
+
+    static native long ctorNative(long nativeSceneObject);
 
     static native String getName(long sceneObject);
 

@@ -29,6 +29,9 @@ namespace gvr {
     JNIEXPORT jlong JNICALL
     Java_org_gearvrf_NativeMesh_ctorBuffers(JNIEnv* env, jobject obj, jlong vbuf, jlong ibuf);
 
+    JNIEXPORT jlong JNICALL
+    Java_org_gearvrf_NativeMesh_ctorNative(JNIEnv* env, jobject obj, jlong mativeMesh);
+
     JNIEXPORT void JNICALL
     Java_org_gearvrf_NativeMesh_setVertexBuffer(JNIEnv* env,
                                                 jobject obj, jlong jmesh, jlong vertices);
@@ -45,7 +48,6 @@ namespace gvr {
     {
         VertexBuffer* vbuf = reinterpret_cast<VertexBuffer*>(jvertices);
         IndexBuffer* ibuf = reinterpret_cast<IndexBuffer*>(jindices);
-        LOGD("Mesh::ctorBuffer vertices = %p, indices = %p", vbuf, ibuf);
         Mesh* mesh = new Mesh(*vbuf);
         if (ibuf)
         {
@@ -54,9 +56,28 @@ namespace gvr {
         return reinterpret_cast<jlong>(mesh);
     }
 
+    JNIEXPORT jlong JNICALL
+    Java_org_gearvrf_NativeMesh_ctorNative(JNIEnv* env, jobject jmesh, jlong nativeMesh)
+    {
+        Mesh* mesh = reinterpret_cast<Mesh*>(nativeMesh);
+        VertexBuffer* nativeVbuf = mesh->getVertexBuffer();
+        IndexBuffer* nativeIbuf = mesh->getIndexBuffer();
+        jclass meshClass = env->GetObjectClass(jmesh);
+
+        jmethodID setvbufMethod = env->GetMethodID(meshClass, "setVertexBuffer", "(J)V");
+        env->CallVoidMethod(jmesh, setvbufMethod, nativeVbuf);
+        if (nativeIbuf != nullptr)
+        {
+            jmethodID setibufMethod = env->GetMethodID(meshClass, "setIndexBuffer", "(J)V");
+
+            env->CallVoidMethod(jmesh, setibufMethod, nativeIbuf);
+        }
+        env->DeleteLocalRef(meshClass);
+        return nativeMesh;
+    }
+
     JNIEXPORT void JNICALL
-    Java_org_gearvrf_NativeMesh_setVertexBuffer(JNIEnv * env,
-                                            jobject obj, jlong jmesh, jlong jverts)
+    Java_org_gearvrf_NativeMesh_setVertexBuffer(JNIEnv* env, jobject obj, jlong jmesh, jlong jverts)
     {
         Mesh* mesh = reinterpret_cast<Mesh*>(jmesh);
         VertexBuffer* vbuf = reinterpret_cast<VertexBuffer*>(jverts);
@@ -74,7 +95,8 @@ namespace gvr {
 
     JNIEXPORT void JNICALL
     Java_org_gearvrf_NativeMesh_setBones(JNIEnv * env, jobject obj, jlong jmesh,
-                                         jlongArray jBonePtrArray) {
+                                         jlongArray jBonePtrArray)
+    {
         Mesh* mesh = reinterpret_cast<Mesh*>(jmesh);
         int arrlen;
         if (!jBonePtrArray || !(arrlen = env->GetArrayLength(jBonePtrArray))) {
@@ -93,8 +115,9 @@ namespace gvr {
     }
 
     JNIEXPORT void JNICALL
-    Java_org_gearvrf_NativeMesh_getSphereBound(JNIEnv * env,
-                                               jobject obj, jlong jmesh, jfloatArray jsphere) {
+    Java_org_gearvrf_NativeMesh_getSphereBound(JNIEnv * env, jobject obj,
+                                               jlong jmesh, jfloatArray jsphere)
+    {
         Mesh* mesh = reinterpret_cast<Mesh*>(jmesh);
         const BoundingVolume& bvol = mesh->getBoundingVolume();
         float   sphere[4];

@@ -33,7 +33,6 @@ import java.nio.IntBuffer;
 public class GVRIndexBuffer extends GVRHybridObject implements PrettyPrint
 {
     private static final String TAG = GVRIndexBuffer.class.getSimpleName();
-    private String mDescriptor;
 
     /**
      * Constructs an index buffer of a give size and type.
@@ -45,6 +44,16 @@ public class GVRIndexBuffer extends GVRHybridObject implements PrettyPrint
     public GVRIndexBuffer(GVRContext gvrContext, int bytesPerIndex, int indexCount)
     {
         super(gvrContext, NativeIndexBuffer.ctor(bytesPerIndex, indexCount));
+    }
+
+    /**
+     * Constructs a GVRIndexBuffer from a C++ IndexBuffer object.
+     * @param gvrContext        GVRContext to associate index buffer with.
+     * @param nativePtr         -> C++ IndexBuffer object
+     */
+    public GVRIndexBuffer(GVRContext gvrContext, long nativePtr)
+    {
+        super(gvrContext, nativePtr);
     }
 
     /**

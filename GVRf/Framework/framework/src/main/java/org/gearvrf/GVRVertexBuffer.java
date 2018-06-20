@@ -58,7 +58,6 @@ import java.util.regex.Pattern;
 public class GVRVertexBuffer extends GVRHybridObject implements PrettyPrint
 {
     private static final String TAG = GVRVertexBuffer.class.getSimpleName();
-    private String mDescriptor;
 
     /**
      * Construct a vertex buffer with the specified vertex layout.
@@ -79,7 +78,16 @@ public class GVRVertexBuffer extends GVRHybridObject implements PrettyPrint
     public GVRVertexBuffer(GVRContext gvrContext, String descriptor, int vertexCount)
     {
         super(gvrContext, NativeVertexBuffer.ctor(descriptor, vertexCount));
-        mDescriptor = descriptor;
+    }
+
+    /**
+     * Construct a GVRVertexBuffer from the C++ VertexBuffer object.
+     * @param gvrContext    GVRContext to associate vertex buffer with.
+     * @param nativePtr     -> C++ VertexBuffer object
+     */
+    public GVRVertexBuffer(GVRContext gvrContext, long nativePtr)
+    {
+        super(gvrContext, nativePtr);
     }
 
     /**
@@ -524,7 +532,7 @@ public class GVRVertexBuffer extends GVRHybridObject implements PrettyPrint
      */
     public String getDescriptor()
     {
-        return mDescriptor;
+        return NativeVertexBuffer.getDescriptor(getNative());
     }
 
     /**
@@ -613,6 +621,8 @@ class NativeVertexBuffer {
     static native int  getAttributeSize(long vbuf, String name);
 
     static native int getBoundingVolume(long vbuf, float[] bv);
+
+    static native String getDescriptor(long vbuf);
 
     static native void dump(long vbuf, String attrName);
 }

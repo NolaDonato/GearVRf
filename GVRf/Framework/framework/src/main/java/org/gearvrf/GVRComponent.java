@@ -114,6 +114,23 @@ public class GVRComponent extends GVRHybridObject {
         }
     }
 
+    void setNativeOwner(GVRSceneObject owner)
+    {
+        if (owner != null)
+        {
+            this.owner = owner;
+            onAttach(owner);
+        }
+        else
+        {
+            if (null != this.owner)
+            {
+                onDetach(this.owner);
+                this.owner = null;
+            }
+        }
+    }
+
     /**
      * Checks if the {@link GVRComponent} is attached to a {@link GVRSceneObject}.
      *

@@ -79,6 +79,9 @@ namespace gvr {
     JNIEXPORT int JNICALL
     Java_org_gearvrf_NativeVertexBuffer_getBoundingVolume(JNIEnv* env, jobject obj,
                                                          jlong jvbuf, jfloatArray outputArray);
+    JNIEXPORT jstring JNICALL
+    Java_org_gearvrf_NativeVertexBuffer_getDescriptor(JNIEnv* env, jobject obj, jlong jvbuf);
+
     JNIEXPORT void JNICALL
     Java_org_gearvrf_NativeVertexBuffer_dump(JNIEnv* env, jobject obj,
                                                           jlong jvbuf, jstring attrName);
@@ -323,6 +326,14 @@ Java_org_gearvrf_NativeVertexBuffer_dump(JNIEnv* env, jobject obj,
     vbuf->dump(char_key);
     env->ReleaseStringUTFChars(attrName, char_key);
 
+}
+
+JNIEXPORT jstring JNICALL
+Java_org_gearvrf_NativeVertexBuffer_getDescriptor(JNIEnv* env, jobject obj, jlong jvbuf)
+{
+    VertexBuffer* vbuf = reinterpret_cast<VertexBuffer*>(jvbuf);
+    const char* desc = vbuf->getDescriptor();
+    return env->NewStringUTF(desc);
 }
 
 }

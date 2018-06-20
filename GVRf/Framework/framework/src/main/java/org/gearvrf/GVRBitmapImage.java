@@ -65,6 +65,11 @@ public class GVRBitmapImage extends GVRImage
         super(gvrContext, NativeBitmapImage.constructor(ImageType.BITMAP.Value, GL_RGBA));
     }
 
+    GVRBitmapImage(GVRContext gvrContext, long nativeBitmap)
+    {
+        super(gvrContext, nativeBitmap);
+    }
+
     /**
      * Constructs a texture by loading a bitmap from a PNG file in (or under)
      * the {@code assets} directory.

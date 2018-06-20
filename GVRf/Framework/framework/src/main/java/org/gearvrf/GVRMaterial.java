@@ -165,6 +165,17 @@ public class GVRMaterial extends  GVRShaderData
         }
     }
 
+    GVRMaterial(GVRContext gvrContext, long nativeShaderData)
+    {
+        super(gvrContext, nativeShaderData);
+        Pattern pattern = Pattern.compile("([a-zA-Z0-9]+) ([a-zA-Z0-9_]+)");
+        Matcher matcher = pattern.matcher(getTextureDescriptor());
+        if (matcher.find(0))
+        {
+            mMainTextureName = matcher.group(2);
+        }
+    }
+
     /**
      * A convenience overload: builds a {@link GVRMaterial} that uses the most
      * common stock shader, the {@linkplain GVRShaderType.Texture 'texture'} shader.

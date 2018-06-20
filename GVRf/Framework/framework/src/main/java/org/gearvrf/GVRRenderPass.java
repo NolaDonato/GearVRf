@@ -88,6 +88,18 @@ public class GVRRenderPass extends GVRHybridObject implements IRenderable {
         mMesh = null;
     }
 
+    /**
+     * Construct a GVRRenderPass from a C++ RenderPass object
+     * @param ctx       Current context
+     * @param nativePtr native pointer -> C++ RenderPass
+     */
+    public GVRRenderPass(GVRContext ctx, long nativePtr)
+    {
+        super(ctx, nativePtr);
+        mCullFace = GVRCullFaceEnum.Back;
+        mMesh = null;
+    }
+
     public GVRRenderPass(GVRContext gvrContext, GVRMaterial material) {
         super(gvrContext, NativeRenderPass.ctor());
         setMaterial(material);
@@ -106,6 +118,11 @@ public class GVRRenderPass extends GVRHybridObject implements IRenderable {
     {
         mMaterial = material;
         NativeRenderPass.setMaterial(getNative(), material.getNative());
+    }
+
+    private void setMaterial(long nativeMaterial)
+    {
+        mMaterial = new GVRMaterial(getGVRContext(), nativeMaterial);
     }
 
     /**
